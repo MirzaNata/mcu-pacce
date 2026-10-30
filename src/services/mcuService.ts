@@ -1,100 +1,86 @@
+import { supabase } from '../lib/supabaseClient';
 import type { MCURecord } from '../types';
 
-const STORAGE_KEY = 'mcu_records';
-
-const getStoredMCUList = (): MCURecord[] => {
-  const data = localStorage.getItem(STORAGE_KEY);
-  if (!data) return [];
-  try {
-    return JSON.parse(data) as MCURecord[];
-  } catch {
-    return [];
-  }
-};
-
-const saveMCUList = (records: MCURecord[]): void => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
-};
-
 export const mcuService = {
-  getMCUByPatientId: (patientId: string): MCURecord | undefined => {
-    const list = getStoredMCUList();
-    return list.find((mcu) => mcu.patientId === patientId);
+  // Ambil rekam MCU berdasarkan ID Pasien
+  async getMCUByPatientId(patientId: string): Promise<MCURecord | null> {
+    const { data, error } = await supabase
+      .from('mcu_records')
+      .select('*')
+      .eq('patient_id', patientId)
+      .single();
+
+    if (error || !data) return null;
+
+    return {
+      id: data.id,
+      patientId: data.patient_id,
+      generalExamination: data.general_examination,
+      anamnesis: data.anamnesis,
+      medicalHistory: data.medical_history,
+      vaccinationHistory: data.vaccination_history,
+      lifestyle: data.lifestyle,
+      physicalExamination: data.physical_examination,
+      visionExamination: data.vision_examination,
+      supportingExamination: data.supporting_examination,
+      doctorConclusion: data.doctor_conclusion,
+      updatedAt: data.updated_at,
+      status: data.doctor_conclusion?.finalResult || 'DRAFT',
+    } as unknown as MCURecord;
   },
 
-  initializeOrGetMCU: (patientId: string): MCURecord => {
-    const list = getStoredMCUList();
-    const existing = list.find((m) => m.patientId === patientId);
+  // Simpan / Update rekam MCU
+  async saveMCURecord(mcuRecord: MCURecord): Promise<boolean> {
+    const existing = await this.getMCUByPatientId(mcuRecord.patientId);
+    const existingId = (existing as any)?.id;
 
-    if (existing) {
-      return existing;
-    }
-
-    // Inisialisasi awal dengan SEMUA input Tanda Vital KOSONG ('')
-    const newRecord: MCURecord = {
-      patientId,
-      status: 'BELUM_MULAI',
-      updatedAt: new Date().toISOString(),
-      anamnesis: { complaints: [], otherComplaintText: '', notes: '' },
-      generalExamination: {
-        systolic: '',
-        diastolic: '',
-        pulse: '',
-        respiratoryRate: '',
-        temperature: '',
-        oxygenSaturation: '',
-        height: '',
-        weight: '',
-        bmi: '',
-        bmiCategory: '',
-        notes: '',
-      },
-      physicalExamination: { bodyParts: {}, notes: '' },
-      doctorConclusion: {
-        conclusion: '',
-        recommendation: '',
-        notes: '',
-        date: new Date().toISOString().split('T')[0],
-        doctorName: '',
-        finalResult: '',
-      },
-      medicalHistory: {},
-      vaccinationHistory: {},
-      lifestyle: {},
+    const payload = {
+      patient_id: mcuRecord.patientId,
+      general_examination: mcuRecord.generalExamination || {},
+      anamnesis: mcuRecord.anamnesis || {},
+      medical_history: mcuRecord.medicalHistory || {},
+      vaccination_history: mcuRecord.vaccinationHistory || {},
+      lifestyle: mcuRecord.lifestyle || {},
+      physical_examination: mcuRecord.physicalExamination || {},
+      vision_examination: mcuRecord.visionExamination || {},
+      supporting_examination: mcuRecord.supportingExamination || {},
+      doctor_conclusion: mcuRecord.doctorConclusion || {},
+      updated_at: new Date().toISOString(),
     };
 
-    list.push(newRecord);
-    saveMCUList(list);
-    return newRecord;
-  },
-
-  saveMCUProgress: (patientId: string, partialData: Partial<MCURecord>): MCURecord => {
-    const list = getStoredMCUList();
-    const index = list.findIndex((m) => m.patientId === patientId);
-    const baseRecord = index >= 0 ? list[index] : mcuService.initializeOrGetMCU(patientId);
-
-    let newStatus = baseRecord.status;
-    if (partialData.doctorConclusion?.finalResult) {
-      newStatus = 'SELESAI';
-    } else if (newStatus === 'BELUM_MULAI') {
-      newStatus = 'DALAM_PROSES';
-    }
-
-    const updatedRecord: MCURecord = {
-      ...baseRecord,
-      ...partialData,
-      patientId,
-      status: newStatus,
-      updatedAt: new Date().toISOString(),
-    };
-
-    if (index >= 0) {
-      list[index] = updatedRecord;
+    if (existingId) {
+      const { error } = await supabase
+        .from('mcu_records')
+        .update(payload)
+        .eq('id', existingId);
+      return !error;
     } else {
-      list.push(updatedRecord);
+      const { error } = await supabase
+        .from('mcu_records')
+        .insert([payload]);
+      return !error;
+    }
+  },
+
+  // Upload gambar tanda tangan ke Supabase Storage (Bucket 'signatures')
+  async uploadDoctorSignature(file: File): Promise<string | null> {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `signature_${Date.now()}.${fileExt}`;
+    const filePath = `doctors/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('signatures')
+      .upload(filePath, file);
+
+    if (uploadError) {
+      console.error('Gagal upload tanda tangan:', uploadError);
+      return null;
     }
 
-    saveMCUList(list);
-    return updatedRecord;
+    const { data } = supabase.storage
+      .from('signatures')
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
   },
 };
