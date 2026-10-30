@@ -172,7 +172,12 @@ export const Dashboard = () => {
                     </td>
                     <td className="p-3 text-center">
                       <button
-                        onClick={() => navigate(`/mcu-examination/${p.id}`)}
+                        type="button"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          console.log("Navigasi ke ID Peserta:", p.id); // Cek ID di Console (F12)
+                          navigate(`/mcu-examination/${p.id}`);
+                        }}
                         className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer inline-flex items-center gap-1 font-bold"
                       >
                         <FileText className="w-3.5 h-3.5" /> Periksa
