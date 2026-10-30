@@ -65,30 +65,36 @@ export const patientService = {
   },
 
   async addPatient(patient: Partial<Patient>): Promise<Patient | null> {
+    // Generate No MCU otomatis jika tidak diisi atau string kosong
+    const autoMcu = patient.mcuNumber && patient.mcuNumber.trim() !== '' 
+      ? patient.mcuNumber 
+      : `MCU-${Date.now().toString().slice(-6)}`;
+
     const { data, error } = await supabase
       .from('patients')
       .insert([{
-        mcu_number: patient.mcuNumber || `MCU-${Date.now().toString().slice(-6)}`,
+        mcu_number: autoMcu,
         full_name: patient.fullName,
-        nik: patient.nik || patient.identityNumber,
-        identity_number: patient.identityNumber || patient.nik,
-        date_of_birth: patient.dateOfBirth,
-        gender: patient.gender,
-        age: patient.age,
-        company: patient.company || patient.companyName,
-        company_name: patient.companyName || patient.company,
-        phone_number: patient.phoneNumber || patient.phone,
-        marital_status: patient.maritalStatus,
-        nationality: patient.nationality,
-        blood_type: patient.bloodType,
-        rhesus: patient.rhesus,
-        status: patient.status || 'Pending',
+        nik: patient.nik || patient.identityNumber || '',
+        identity_number: patient.identityNumber || patient.nik || '',
+        date_of_birth: patient.dateOfBirth || null, // Diubah ke null agar tidak error format date di Supabase
+        gender: patient.gender || 'Laki-Laki',
+        age: Number(patient.age) || 0, // Dipastikan berupa Angka
+        company: patient.company || patient.companyName || '',
+        company_name: patient.companyName || patient.company || '',
+        phone_number: patient.phoneNumber || patient.phone || '',
+        marital_status: patient.maritalStatus || 'Belum Menikah',
+        nationality: patient.nationality || 'WNI',
+        blood_type: patient.bloodType || 'A',
+        rhesus: patient.rhesus || '+',
+        status: patient.status || 'Registered',
       }])
       .select()
       .single();
 
     if (error || !data) {
-      console.error('Error adding patient:', error);
+      console.error('Error adding patient to Supabase:', error);
+      alert('Gagal menyimpan peserta: ' + (error?.message || 'Terjadi kesalahan'));
       return null;
     }
 
