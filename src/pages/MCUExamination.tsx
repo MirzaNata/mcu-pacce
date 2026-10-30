@@ -16,7 +16,11 @@ import {
   ChevronLeft,
   ChevronRight,
   Upload,
-  X
+  X,
+  AlertCircle,
+  Save,
+  Building2,
+  Calendar
 } from 'lucide-react';
 import { mcuService } from '../services/mcuService';
 import { patientService } from '../services/patientService';
@@ -117,12 +121,16 @@ const VACCINATION_ITEMS = [
 ];
 
 export const MCUExamination = () => {
-  const { id } = useParams<{ id: string }>();
+  const params = useParams<{ id?: string; patientId?: string }>();
+  const id = params.id || params.patientId;
+
   const navigate = useNavigate();
 
   const [patient, setPatient] = useState<Patient | null>(null);
   const [mcuData, setMcuData] = useState<MCURecord | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [saving, setSaving] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   
   const [activeTab, setActiveTab] = useState<
     'vital' | 'anamnesis' | 'medicalHistory' | 'vaccination' | 'lifestyle' | 'physical' | 'supporting' | 'doctor'
@@ -151,24 +159,40 @@ export const MCUExamination = () => {
 
   useEffect(() => {
     let isMounted = true;
-    if (id) {
-      setLoading(true);
-      Promise.all([
-        patientService.getPatientById(id),
-        mcuService.initializeOrGetMCU(id),
-      ])
-        .then(([patientRes, mcuRes]) => {
-          if (isMounted) {
-            setPatient(patientRes);
-            setMcuData(mcuRes);
-            setLoading(false);
-          }
-        })
-        .catch((err) => {
-          console.error('Gagal mengambil data pemeriksaan MCU:', err);
-          if (isMounted) setLoading(false);
-        });
+    if (!id) {
+      setErrorMessage('ID Peserta tidak ditemukan di URL.');
+      setLoading(false);
+      return;
     }
+
+    setLoading(true);
+    setErrorMessage(null);
+
+    Promise.all([
+      patientService.getPatientById(id),
+      mcuService.initializeOrGetMCU(id),
+    ])
+      .then(([patientRes, mcuRes]) => {
+        if (!isMounted) return;
+
+        if (!patientRes) {
+          setErrorMessage(`Peserta dengan ID (${id}) tidak ditemukan di database.`);
+          setLoading(false);
+          return;
+        }
+
+        setPatient(patientRes);
+        setMcuData(mcuRes);
+        setLoading(false);
+      })
+      .catch((err) => {
+        console.error('Gagal mengambil data pemeriksaan MCU:', err);
+        if (isMounted) {
+          setErrorMessage('Gagal memuat data dari Supabase: ' + (err?.message || 'Terjadi kesalahan'));
+          setLoading(false);
+        }
+      });
+
     return () => {
       isMounted = false;
     };
@@ -178,7 +202,6 @@ export const MCUExamination = () => {
     if (topRef.current) {
       topRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [activeTab]);
 
   const handlePrevTab = () => {
@@ -199,9 +222,28 @@ export const MCUExamination = () => {
     const updated = { ...mcuData, ...partial };
     setMcuData(updated);
     setIsSaved(true);
-    setTimeout(() => setIsSaved(false), 2000);
+    setTimeout(() => setIsSaved(false), 2500);
 
-    await mcuService.saveMCUProgress(id, partial);
+    try {
+      await mcuService.saveMCUProgress(id, partial);
+    } catch (err) {
+      console.error('Gagal melakukan auto-save progress MCU:', err);
+    }
+  };
+
+  const handleManualSave = async () => {
+    if (!id || !mcuData) return;
+    try {
+      setSaving(true);
+      await mcuService.saveMCUProgress(id, mcuData);
+      setIsSaved(true);
+      setTimeout(() => setIsSaved(false), 3000);
+    } catch (err: any) {
+      console.error('Gagal menyimpan pemeriksaan MCU:', err);
+      alert('Gagal menyimpan pemeriksaan MCU: ' + (err?.message || 'Terjadi kesalahan'));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const calculateBMIDetails = (
@@ -262,10 +304,14 @@ export const MCUExamination = () => {
       notes: '',
     };
 
-    const updatedGeneral = {
+    const updatedGeneral: any = {
       ...currentGeneral,
       [field]: value,
     };
+
+    if (field === 'pulse') {
+      updatedGeneral.pulseRate = value;
+    }
 
     if (field === 'height' || field === 'weight') {
       const h = field === 'height' ? value : updatedGeneral.height;
@@ -514,7 +560,7 @@ export const MCUExamination = () => {
     if (!mcuData) return;
 
     let signatureValue = '';
-    const uploadedUrl = await mcuService.uploadDoctorSignature(file);
+    const uploadedUrl = await mcuService.uploadDoctorSignature ? await mcuService.uploadDoctorSignature(file) : null;
 
     if (uploadedUrl) {
       signatureValue = uploadedUrl;
@@ -571,7 +617,8 @@ export const MCUExamination = () => {
     let completedSections = 0;
     const totalSections = 7;
 
-    if (mcuData.generalExamination && (mcuData.generalExamination.systolic !== '' || mcuData.generalExamination.pulse !== '' || mcuData.generalExamination.height !== '')) {
+    const gen = mcuData.generalExamination;
+    if (gen && (gen.systolic !== '' || gen.pulse !== '' || gen.height !== '' || (gen as any).pulseRate !== '')) {
       completedSections += 1;
     }
     if (mcuData.anamnesis?.complaints && mcuData.anamnesis.complaints.length > 0) {
@@ -631,10 +678,30 @@ export const MCUExamination = () => {
     return <span className="text-gray-400 font-normal">-</span>;
   };
 
-  if (loading || !patient || !mcuData) {
+  if (loading) {
     return (
       <div className="p-8 text-center text-gray-500 font-medium">
-        Memuat data pemeriksaan MCU dari Supabase...
+        Memuat data lembar pemeriksaan MCU...
+      </div>
+    );
+  }
+
+  if (errorMessage || !patient || !mcuData) {
+    return (
+      <div className="p-6 bg-red-50 border border-red-200 rounded-2xl space-y-4 max-w-2xl mx-auto my-8">
+        <div className="flex items-center gap-3 text-red-700 font-bold text-sm">
+          <AlertCircle className="w-5 h-5 shrink-0" />
+          <span>Gagal Membuka Lembar Pemeriksaan</span>
+        </div>
+        <p className="text-xs text-red-600 font-medium">
+          {errorMessage || 'Data peserta atau rekam medis tidak dapat ditemukan.'}
+        </p>
+        <button
+          onClick={() => navigate('/patients')}
+          className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white font-bold text-xs rounded-xl transition-all cursor-pointer inline-flex items-center gap-1.5"
+        >
+          <ArrowLeft className="w-4 h-4" /> Kembali ke Daftar Peserta
+        </button>
       </div>
     );
   }
@@ -643,18 +710,20 @@ export const MCUExamination = () => {
 
   return (
     <div ref={topRef} className="space-y-6">
+      {/* HEADER BAR */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-100 pb-4">
         <div className="flex items-center gap-3">
           <button
             onClick={() => navigate('/patients')}
             className="p-2 text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
+            title="Kembali ke Peserta"
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div>
             <h1 className="text-xl font-black text-gray-900">Pemeriksaan MCU Peserta</h1>
             <p className="text-xs text-gray-500 font-medium mt-0.5">
-              {patient.fullName} • No. MCU: <span className="font-mono text-blue-600 font-bold">{patient.mcuNumber}</span>
+              {patient.fullName} • No. MCU: <span className="font-mono text-blue-600 font-bold">{patient.mcuNumber || '-'}</span>
             </p>
           </div>
         </div>
@@ -664,14 +733,52 @@ export const MCUExamination = () => {
             <span className="text-[10px] font-bold text-gray-400 uppercase block">Progres Pemeriksaan</span>
             <span className="text-xs font-black text-blue-600">{calculateProgress()}% Selesai</span>
           </div>
+
+          <button
+            onClick={handleManualSave}
+            disabled={saving}
+            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+          >
+            <Save className="w-4 h-4" /> {saving ? 'Menyimpan...' : 'Simpan'}
+          </button>
+
           {isSaved && (
-            <div className="px-3 py-1.5 bg-green-50 border border-green-200 text-green-700 text-xs font-bold rounded-xl flex items-center gap-2">
-              <CheckCircle className="w-4 h-4" /> Data Berhasil Disimpan!
+            <div className="px-3 py-1.5 bg-green-50 border border-green-200 text-green-700 text-xs font-bold rounded-xl flex items-center gap-1.5">
+              <CheckCircle className="w-4 h-4 text-green-600" /> Disimpan!
             </div>
           )}
         </div>
       </div>
 
+      {/* IDENTITAS PESERTA BANNER */}
+      <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-xs flex flex-col md:flex-row items-start md:items-center justify-between gap-3 text-xs">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-gray-900 text-sm">{patient.fullName}</span>
+            <span className="px-2 py-0.5 bg-blue-50 text-blue-700 font-bold font-mono text-[11px] rounded-md border border-blue-200">
+              {patient.mcuNumber || 'NO-MCU'}
+            </span>
+          </div>
+          <div className="flex flex-wrap items-center gap-3 text-gray-500 font-medium">
+            <span className="flex items-center gap-1">
+              <Building2 className="w-3.5 h-3.5 text-gray-400" />
+              {patient.company || patient.companyName || '-'}
+            </span>
+            <span>•</span>
+            <span className="flex items-center gap-1">
+              <UserIcon className="w-3.5 h-3.5 text-gray-400" />
+              {patient.gender} ({patient.age || '-'} Thn)
+            </span>
+            <span>•</span>
+            <span className="flex items-center gap-1">
+              <Calendar className="w-3.5 h-3.5 text-gray-400" />
+              NIK: {patient.nik || patient.identityNumber || '-'}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* TABS NAVIGATION */}
       <div className="flex border-b border-gray-200 gap-1 overflow-x-auto pb-1">
         <button
           onClick={() => setActiveTab('vital')}
@@ -786,7 +893,7 @@ export const MCUExamination = () => {
                 </label>
                 <input
                   type="number"
-                  value={mcuData.generalExamination?.pulse ?? ''}
+                  value={mcuData.generalExamination?.pulse ?? (mcuData.generalExamination as any)?.pulseRate ?? ''}
                   onChange={(e) => handleVitalSignChange('pulse', e.target.value === '' ? '' : Number(e.target.value))}
                   onWheel={(e) => e.currentTarget.blur()}
                   className="w-full p-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-hidden focus:ring-2 focus:ring-blue-500"
@@ -815,7 +922,7 @@ export const MCUExamination = () => {
                 <input
                   type="number"
                   step="0.1"
-                  value={mcuData.generalExamination?.temperature ?? ''}
+                  value={mcuData.generalExamination?.temperature ?? (mcuData.generalExamination as any)?.bodyTemperature ?? ''}
                   onChange={(e) => handleVitalSignChange('temperature', e.target.value === '' ? '' : Number(e.target.value))}
                   onWheel={(e) => e.currentTarget.blur()}
                   className="w-full p-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-hidden focus:ring-2 focus:ring-blue-500"
@@ -1500,7 +1607,7 @@ export const MCUExamination = () => {
 
               <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                  <label className="mb-1 block text-xs font-bold text-gray-700">
                     Visus OD (Mata Kanan)
                   </label>
                   <input
@@ -1515,12 +1622,12 @@ export const MCUExamination = () => {
                       })
                     }
                     placeholder="Contoh: 6/6"
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                  <label className="mb-1 block text-xs font-bold text-gray-700">
                     Visus OS (Mata Kiri)
                   </label>
                   <input
@@ -1535,12 +1642,12 @@ export const MCUExamination = () => {
                       })
                     }
                     placeholder="Contoh: 6/6"
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs"
                   />
                 </div>
 
                 <div>
-                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                  <label className="mb-1 block text-xs font-bold text-gray-700">
                     Visus OU (Kedua Mata)
                   </label>
                   <input
@@ -1555,13 +1662,13 @@ export const MCUExamination = () => {
                       })
                     }
                     placeholder="Contoh: 6/6"
-                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
+                <label className="mb-1 block text-xs font-bold text-gray-700">
                   Hasil Tes Buta Warna (Ishihara)
                 </label>
                 <select
@@ -1577,7 +1684,7 @@ export const MCUExamination = () => {
                       },
                     })
                   }
-                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs cursor-pointer font-bold"
                 >
                   <option value="Tidak Dilakukan">Tidak Dilakukan</option>
                   <option value="Normal">Normal</option>
@@ -1588,7 +1695,7 @@ export const MCUExamination = () => {
               </div>
 
               <div>
-                <label className="mb-1 block text-sm font-medium text-gray-700">
+                <label className="mb-1 block text-xs font-bold text-gray-700">
                   Keterangan Pemeriksaan Mata
                 </label>
                 <textarea
@@ -1603,7 +1710,7 @@ export const MCUExamination = () => {
                     })
                   }
                   placeholder="Masukkan keterangan pemeriksaan mata..."
-                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 text-xs"
                 />
               </div>
             </div>
