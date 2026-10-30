@@ -20,7 +20,8 @@ import {
   AlertCircle,
   Save,
   Building2,
-  Calendar
+  Calendar,
+  Printer
 } from 'lucide-react';
 import { mcuService } from '../services/mcuService';
 import { patientService } from '../services/patientService';
@@ -560,7 +561,9 @@ export const MCUExamination = () => {
     if (!mcuData) return;
 
     let signatureValue = '';
-    const uploadedUrl = await mcuService.uploadDoctorSignature ? await mcuService.uploadDoctorSignature(file) : null;
+    const uploadedUrl = typeof mcuService.uploadDoctorSignature === 'function' 
+      ? await mcuService.uploadDoctorSignature(file) 
+      : null;
 
     if (uploadedUrl) {
       signatureValue = uploadedUrl;
@@ -728,16 +731,27 @@ export const MCUExamination = () => {
           </div>
         </div>
 
-        <div className="flex items-center gap-3">
-          <div className="text-right">
+        <div className="flex items-center gap-2">
+          <div className="text-right mr-2">
             <span className="text-[10px] font-bold text-gray-400 uppercase block">Progres Pemeriksaan</span>
             <span className="text-xs font-black text-blue-600">{calculateProgress()}% Selesai</span>
           </div>
 
+          {/* Tombol Cetak PDF Hasil */}
           <button
+            type="button"
+            onClick={() => navigate(`/mcu-results/${id}`)}
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer active:scale-95"
+          >
+            <Printer className="w-4 h-4" /> Cetak PDF
+          </button>
+
+          {/* Tombol Simpan */}
+          <button
+            type="button"
             onClick={handleManualSave}
             disabled={saving}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer active:scale-95 disabled:opacity-50"
+            className="flex items-center gap-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer active:scale-95 disabled:opacity-50"
           >
             <Save className="w-4 h-4" /> {saving ? 'Menyimpan...' : 'Simpan'}
           </button>
