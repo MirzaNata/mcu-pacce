@@ -22,6 +22,7 @@ import { mcuService } from '../services/mcuService';
 import { patientService } from '../services/patientService';
 import { authService } from '../services/authService';
 import type { 
+  Patient,
   MCURecord, 
   MedicalHistoryItem, 
   VaccinationItem, 
@@ -119,8 +120,9 @@ export const MCUExamination = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
 
-  const [patient] = useState(() => (id ? patientService.getPatientById(id) : null));
-  const [mcuData, setMcuData] = useState<MCURecord | null>(() => (id ? mcuService.initializeOrGetMCU(id) : null));
+  const [patient, setPatient] = useState<Patient | null>(null);
+  const [mcuData, setMcuData] = useState<MCURecord | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
   
   const [activeTab, setActiveTab] = useState<
     'vital' | 'anamnesis' | 'medicalHistory' | 'vaccination' | 'lifestyle' | 'physical' | 'supporting' | 'doctor'
@@ -148,6 +150,31 @@ export const MCUExamination = () => {
   const isLastTab = currentIndex === availableTabs.length - 1;
 
   useEffect(() => {
+    let isMounted = true;
+    if (id) {
+      setLoading(true);
+      Promise.all([
+        patientService.getPatientById(id),
+        mcuService.initializeOrGetMCU(id),
+      ])
+        .then(([patientRes, mcuRes]) => {
+          if (isMounted) {
+            setPatient(patientRes);
+            setMcuData(mcuRes);
+            setLoading(false);
+          }
+        })
+        .catch((err) => {
+          console.error('Gagal mengambil data pemeriksaan MCU:', err);
+          if (isMounted) setLoading(false);
+        });
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
+
+  useEffect(() => {
     if (topRef.current) {
       topRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
@@ -166,27 +193,31 @@ export const MCUExamination = () => {
     }
   };
 
-  if (!patient || !mcuData) {
-    return (
-      <div className="p-8 text-center text-gray-500 font-medium">
-        Memuat data pemeriksaan MCU...
-      </div>
-    );
-  }
-
-  const handleSaveProgress = (partial: Partial<MCURecord>) => {
-    if (!id) return;
-    const updated = mcuService.saveMCUProgress(id, partial);
+  const handleSaveProgress = async (partial: Partial<MCURecord>) => {
+    if (!id || !mcuData) return;
+    
+    const updated = { ...mcuData, ...partial };
     setMcuData(updated);
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 2000);
+
+    await mcuService.saveMCUProgress(id, partial);
   };
 
   const calculateBMIDetails = (
-    height: number | '',
-    weight: number | ''
-  ): { bmi: number | ''; bmiCategory: 'Underweight' | 'Healthy Weight' | 'Overweight' | 'Obese' | '' } => {
-    if (typeof height !== 'number' || typeof weight !== 'number' || height <= 0 || weight <= 0 || isNaN(height) || isNaN(weight)) {
+    height?: number | '',
+    weight?: number | ''
+  ): { bmi: number | ''; bmiCategory: string } => {
+    if (
+      height === undefined ||
+      weight === undefined ||
+      typeof height !== 'number' ||
+      typeof weight !== 'number' ||
+      height <= 0 ||
+      weight <= 0 ||
+      isNaN(height) ||
+      isNaN(weight)
+    ) {
       return { bmi: '', bmiCategory: '' };
     }
 
@@ -197,7 +228,7 @@ export const MCUExamination = () => {
       return { bmi: '', bmiCategory: '' };
     }
 
-    let category: 'Underweight' | 'Healthy Weight' | 'Overweight' | 'Obese';
+    let category = '';
     if (bmiRaw < 18.5) {
       category = 'Underweight';
     } else if (bmiRaw < 25.0) {
@@ -215,6 +246,8 @@ export const MCUExamination = () => {
   };
 
   const handleVitalSignChange = (field: keyof GeneralExamination, value: number | '') => {
+    if (!mcuData) return;
+
     const currentGeneral = mcuData.generalExamination || {
       systolic: '',
       diastolic: '',
@@ -246,6 +279,8 @@ export const MCUExamination = () => {
   };
 
   const handleComplaintToggle = (complaintId: string) => {
+    if (!mcuData) return;
+
     const currentAnamnesis = mcuData.anamnesis || { complaints: [], otherComplaintText: '', notes: '' };
     const currentComplaints = currentAnamnesis.complaints || [];
 
@@ -275,6 +310,8 @@ export const MCUExamination = () => {
   };
 
   const handleOtherComplaintTextChange = (text: string) => {
+    if (!mcuData) return;
+
     const currentAnamnesis = mcuData.anamnesis || { complaints: [], otherComplaintText: '', notes: '' };
     handleSaveProgress({
       anamnesis: {
@@ -287,8 +324,10 @@ export const MCUExamination = () => {
   const handlePhysicalBodyPartChange = (
     partId: string,
     field: 'status' | 'notes',
-    value: 'Normal' | 'Tidak Normal' | '' | string
+    value: string
   ) => {
+    if (!mcuData) return;
+
     const currentPhysical = mcuData.physicalExamination || { bodyParts: {}, notes: '' };
     const currentBodyParts = currentPhysical.bodyParts || {};
     const currentPart = currentBodyParts[partId] || { status: '', notes: '' };
@@ -314,8 +353,10 @@ export const MCUExamination = () => {
   const handleMainSupportingExamChange = (
     examId: string,
     field: 'status' | 'notes',
-    value: 'Normal' | 'Tidak Normal' | '' | string
+    value: string
   ) => {
+    if (!mcuData) return;
+
     const currentSupporting = mcuData.supportingExamination || { mainExams: {}, additionalExams: [], notes: '' };
     const currentMainExams = currentSupporting.mainExams || {};
     const currentExam = currentMainExams[examId] || { status: '', notes: '' };
@@ -339,6 +380,8 @@ export const MCUExamination = () => {
   };
 
   const handleAddAdditionalExam = () => {
+    if (!mcuData) return;
+
     const currentSupporting = mcuData.supportingExamination || { mainExams: {}, additionalExams: [], notes: '' };
     const currentAdditional = currentSupporting.additionalExams || [];
 
@@ -362,6 +405,8 @@ export const MCUExamination = () => {
     field: 'name' | 'status' | 'notes',
     value: string
   ) => {
+    if (!mcuData) return;
+
     const currentSupporting = mcuData.supportingExamination || { mainExams: {}, additionalExams: [], notes: '' };
     const currentAdditional = currentSupporting.additionalExams || [];
 
@@ -381,6 +426,8 @@ export const MCUExamination = () => {
   };
 
   const handleDeleteAdditionalExam = (examId: string) => {
+    if (!mcuData) return;
+
     const currentSupporting = mcuData.supportingExamination || { mainExams: {}, additionalExams: [], notes: '' };
     const currentAdditional = currentSupporting.additionalExams || [];
 
@@ -399,9 +446,11 @@ export const MCUExamination = () => {
     field: keyof MedicalHistoryItem,
     value: string
   ) => {
+    if (!mcuData) return;
+
     const currentMedHistory = mcuData.medicalHistory || {};
     const currentItem = currentMedHistory[itemId] || { personalHistory: '', familyHistory: '', description: '' };
-    
+
     const updatedItem = {
       ...currentItem,
       [field]: value,
@@ -420,6 +469,8 @@ export const MCUExamination = () => {
     field: keyof VaccinationItem,
     value: string
   ) => {
+    if (!mcuData) return;
+
     const currentVacHistory = mcuData.vaccinationHistory || {};
     const currentItem = currentVacHistory[itemId] || { status: '', date: '', vaccineName: '' };
 
@@ -441,6 +492,8 @@ export const MCUExamination = () => {
     field: string,
     value: string | number
   ) => {
+    if (!mcuData) return;
+
     const currentLifestyle = mcuData.lifestyle || {};
     const currentSection = (currentLifestyle[section] as Record<string, unknown>) || {};
 
@@ -457,31 +510,43 @@ export const MCUExamination = () => {
     handleSaveProgress({ lifestyle: updatedLifestyle });
   };
 
-  const handleSignatureUpload = (file: File) => {
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      const base64String = reader.result as string;
-      const currentDoc = mcuData.doctorConclusion || {
-        conclusion: '',
-        recommendation: '',
-        finalResult: '',
-        doctorName: currentUser?.name || 'Dokter Pemeriksa',
-        date: new Date().toISOString().split('T')[0],
-        notes: '',
-      };
+  const handleSignatureUpload = async (file: File) => {
+    if (!mcuData) return;
 
-      handleSaveProgress({
-        doctorConclusion: {
-          ...currentDoc,
-          notes: currentDoc.notes || '',
-          doctorSignature: base64String,
-        } as unknown as DoctorConclusion,
+    let signatureValue = '';
+    const uploadedUrl = await mcuService.uploadDoctorSignature(file);
+
+    if (uploadedUrl) {
+      signatureValue = uploadedUrl;
+    } else {
+      signatureValue = await new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
       });
+    }
+
+    const currentDoc = mcuData.doctorConclusion || {
+      conclusion: '',
+      recommendation: '',
+      finalResult: '',
+      doctorName: currentUser?.name || 'Dokter Pemeriksa',
+      date: new Date().toISOString().split('T')[0],
+      notes: '',
     };
-    reader.readAsDataURL(file);
+
+    handleSaveProgress({
+      doctorConclusion: {
+        ...currentDoc,
+        notes: currentDoc.notes || '',
+        doctorSignature: signatureValue,
+      } as DoctorConclusion,
+    });
   };
 
   const handleRemoveSignature = () => {
+    if (!mcuData) return;
+
     const currentDoc = mcuData.doctorConclusion || {
       conclusion: '',
       recommendation: '',
@@ -496,11 +561,13 @@ export const MCUExamination = () => {
         ...currentDoc,
         notes: currentDoc.notes || '',
         doctorSignature: '',
-      } as unknown as DoctorConclusion,
+      } as DoctorConclusion,
     });
   };
 
   const calculateProgress = (): number => {
+    if (!mcuData) return 0;
+
     let completedSections = 0;
     const totalSections = 7;
 
@@ -540,7 +607,7 @@ export const MCUExamination = () => {
         </span>
       );
     }
-    if (category === 'Healthy Weight' || category === 'Healthyweight') {
+    if (category === 'Healthy Weight') {
       return (
         <span className="px-2.5 py-1 text-xs font-bold rounded-lg bg-green-100 text-green-800 border border-green-300">
           Healthy Weight
@@ -563,6 +630,14 @@ export const MCUExamination = () => {
     }
     return <span className="text-gray-400 font-normal">-</span>;
   };
+
+  if (loading || !patient || !mcuData) {
+    return (
+      <div className="p-8 text-center text-gray-500 font-medium">
+        Memuat data pemeriksaan MCU dari Supabase...
+      </div>
+    );
+  }
 
   const docConclusionAny = (mcuData.doctorConclusion || {}) as Record<string, string | undefined>;
 
@@ -1366,7 +1441,7 @@ export const MCUExamination = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {PHYSICAL_EXAM_ITEMS.map((item) => {
-                    const data = mcuData.physicalExamination?.bodyParts?.[item.id] || {};
+                    const data = (mcuData.physicalExamination?.bodyParts?.[item.id] || {}) as { status?: string; notes?: string };
                     return (
                       <tr key={item.id} className="hover:bg-gray-50/60 transition-colors">
                         <td className="p-3 font-semibold text-gray-800 text-xs">{item.label}</td>
@@ -1411,7 +1486,7 @@ export const MCUExamination = () => {
                 </tbody>
               </table>
             </div>
-            
+
             {/* PEMERIKSAAN MATA DAN VISUS */}
             <div className="mt-6 rounded-xl border border-gray-200 bg-white p-5 space-y-5">
               <div className="border-b border-gray-200 pb-3">
@@ -1554,7 +1629,7 @@ export const MCUExamination = () => {
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {SUPPORTING_EXAM_ITEMS.map((item) => {
-                    const data = mcuData.supportingExamination?.mainExams?.[item.id] || {};
+                    const data = (mcuData.supportingExamination?.mainExams?.[item.id] || {}) as { status?: string; notes?: string };
                     return (
                       <tr key={item.id} className="hover:bg-gray-50/60 transition-colors">
                         <td className="p-3 font-semibold text-gray-800 text-xs">{item.label}</td>
@@ -1719,7 +1794,7 @@ export const MCUExamination = () => {
                         ...currentDoc,
                         conclusion: e.target.value,
                         notes: currentDoc.notes || '',
-                      } as unknown as DoctorConclusion,
+                      } as DoctorConclusion,
                     });
                   }}
                   className="w-full p-2.5 border border-gray-200 rounded-xl text-xs outline-hidden focus:ring-2 focus:ring-blue-500"
@@ -1746,7 +1821,7 @@ export const MCUExamination = () => {
                         ...currentDoc,
                         recommendation: e.target.value,
                         notes: currentDoc.notes || '',
-                      } as unknown as DoctorConclusion,
+                      } as DoctorConclusion,
                     });
                   }}
                   className="w-full p-2.5 border border-gray-200 rounded-xl text-xs outline-hidden focus:ring-2 focus:ring-blue-500"
@@ -1773,7 +1848,7 @@ export const MCUExamination = () => {
                         ...currentDoc,
                         finalResult: val,
                         notes: currentDoc.notes || '',
-                      } as unknown as DoctorConclusion,
+                      } as DoctorConclusion,
                     });
                   }}
                   className="w-full p-2.5 border border-gray-200 rounded-xl text-xs font-bold cursor-pointer outline-hidden focus:ring-2 focus:ring-blue-500"
@@ -1785,7 +1860,6 @@ export const MCUExamination = () => {
                 </select>
               </div>
 
-              {/* NAMA DOKTER PEMERIKSA */}
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">Nama Dokter Pemeriksa</label>
                 <input
@@ -1805,7 +1879,7 @@ export const MCUExamination = () => {
                         ...currentDoc,
                         doctorName: e.target.value,
                         notes: currentDoc.notes || '',
-                      } as unknown as DoctorConclusion,
+                      } as DoctorConclusion,
                     });
                   }}
                   placeholder="Ketik nama lengkap dokter beserta gelar (mis. dr. Ahmad Fauzi, Sp.JP)..."
@@ -1813,7 +1887,6 @@ export const MCUExamination = () => {
                 />
               </div>
 
-              {/* UPLOAD TANDA TANGAN DOKTER */}
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-1">Upload Tanda Tangan Dokter</label>
                 <p className="text-[11px] text-gray-500 mb-2">Unggah file foto / gambar tanda tangan dokter dalam format PNG, JPG, atau JPEG.</p>
@@ -1864,7 +1937,6 @@ export const MCUExamination = () => {
           </div>
         )}
 
-        {/* NAVIGASI BAWAH PEMERIKSAAN */}
         <div className="flex items-center justify-between pt-6 mt-8 border-t border-gray-200">
           <button
             type="button"

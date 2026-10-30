@@ -1,209 +1,181 @@
-export type Role = 'PETUGAS' | 'ADMIN' | 'DOKTER' | 'LAB' | 'STAFF';
-
-export type MCUStatus = 'BELUM_MULAI' | 'DALAM_PROSES' | 'MENUNGGU_DOKTER' | 'SELESAI';
-
-export interface User {
-  id: string;
-  username: string;
-  name: string;
-  role: Role;
-}
+export type MCUStatus = 'Pending' | 'In Progress' | 'Completed' | 'SCHEDULED' | 'IN_PROGRESS' | 'COMPLETED' | string;
 
 export interface Patient {
   id: string;
-  mcuNumber: string;
+  mcuNumber?: string; // Dibuat opsional agar tidak error saat create patient
   fullName: string;
-  identityNumber: string;
-  gender: 'Laki-Laki' | 'Perempuan';
-  dateOfBirth: string;
+  nik?: string;
+  identityNumber?: string;
+  dateOfBirth?: string;
+  gender: 'Laki-Laki' | 'Perempuan' | 'L' | 'P';
+  age?: number;
+  company?: string;
+  companyName?: string;
+  phoneNumber?: string;
+  maritalStatus?: string;
   nationality?: string;
   bloodType?: string;
   rhesus?: string;
-  maritalStatus?: string;
-  phoneNumber: string;
-  address: string;
-  companyName?: string;
+  registrationDate?: string; // Dibuat opsional
+  phone?: string;
+  address?: string;
+  department?: string;
   position?: string;
-  registrationDate: string;
   status?: MCUStatus;
 }
 
 export interface GeneralExamination {
-  systolic: number | '';
-  diastolic: number | '';
-  pulse: number | '';
-  respiratoryRate: number | '';
-  temperature: number | '';
-  oxygenSaturation: number | '';
-  height: number | '';
-  weight: number | '';
-  bmi: number | '';
-  bmiCategory?: 'Underweight' | 'Healthy Weight' | 'Overweight' | 'Obese' | '';
+  systolic?: number | '';
+  diastolic?: number | '';
+  pulse?: number | '';
+  respiratoryRate?: number | '';
+  temperature?: number | '';
+  oxygenSaturation?: number | '';
+  height?: number | '';
+  weight?: number | '';
+  bmi?: number | '';
+  bmiCategory?: string;
   notes?: string;
 }
 
-export interface BodyPartDetail {
-  status?: 'Normal' | 'Tidak Normal' | '';
-  notes?: string;
-}
-
-export interface PhysicalExamination {
-  bodyParts?: Record<string, BodyPartDetail>;
-  notes?: string;
-}
-
-export interface VisionExamination {
-  status?: string;
-  rightEye?: string;
-  leftEye?: string;
-  bothEyes?: string;
-  colorBlindness?: string;
-  notes?: string;
-}
-
-export interface SupportingExamDetail {
-  status?: 'Normal' | 'Tidak Normal' | '';
-  findings?: string;
-  conclusion?: string;
-  notes?: string;
-  reasonNotDone?: string;
-}
-
-export interface AdditionalExamItem {
-  id: string;
-  name: string;
-  status?: 'Normal' | 'Tidak Normal' | '';
-  notes?: string;
-}
-
-export interface SupportingExamination {
-  mainExams?: Record<string, SupportingExamDetail>;
-  additionalExams?: AdditionalExamItem[];
-  notes?: string;
-}
-
-export interface DoctorConclusion {
-  conclusion: string;
-  recommendation: string;
-  notes: string;
-  date: string;
-  doctorName: string;
-  finalResult: 'FIT' | 'FIT_DENGAN_CATATAN' | 'UNFIT' | '';
-  signature?: string;
-}
-
-export interface MedicalHistoryItem {
-  personalHistory?: 'Ya' | 'Tidak' | '';
-  familyHistory?: 'Ya' | 'Tidak' | '';
-  description?: string;
-}
-
-export type MedicalHistory = Record<string, MedicalHistoryItem>;
-
-export interface VaccinationItem {
-  status?: 'Ya' | 'Tidak' | '';
-  date?: string;
-  vaccineName?: string;
-}
-
-export type VaccinationHistory = Record<string, VaccinationItem>;
-
-export interface SmokingLifestyle {
-  status?: string;
-  cigarettesPerDay?: number | '';
-  durationYears?: number | '';
-  notes?: string;
-}
-
-export interface AlcoholLifestyle {
-  status?: string;
-  bottlesPerDay?: number | '';
-  durationYears?: number | '';
-  notes?: string;
-}
-
-export interface TeaCoffeeLifestyle {
-  status?: string;
-  isRoutine?: string;
-  notes?: string;
-}
-
-export interface BowelLifestyle {
-  status?: string;
-  notes?: string;
-}
-
-export interface BladderLifestyle {
-  status?: string;
-  notes?: string;
-}
-
-export interface Lifestyle {
-  smoking?: SmokingLifestyle;
-  alcohol?: AlcoholLifestyle;
-  teaCoffee?: TeaCoffeeLifestyle;
-  bowel?: BowelLifestyle;
-  bladder?: BladderLifestyle;
-}
-
-export interface AnamnesisData {
+export interface Anamnesis {
   complaints?: string[];
   otherComplaintText?: string;
   notes?: string;
 }
 
+export interface MedicalHistoryItem {
+  personalHistory?: string;
+  familyHistory?: string;
+  description?: string;
+}
+
+export interface VaccinationItem {
+  status?: string;
+  date?: string;
+  vaccineName?: string;
+}
+
+export interface Lifestyle {
+  smoking?: {
+    status?: string;
+    cigarettesPerDay?: number | '';
+    durationYears?: number | '';
+    notes?: string;
+  };
+  alcohol?: {
+    status?: string;
+    bottlesPerDay?: number | '';
+    durationYears?: number | '';
+    notes?: string;
+  };
+  teaCoffee?: {
+    status?: string;
+    isRoutine?: string;
+    notes?: string;
+  };
+  bowel?: {
+    status?: string;
+    notes?: string;
+  };
+  bladder?: {
+    status?: string;
+    notes?: string;
+  };
+}
+
+export interface PhysicalExamBodyPart {
+  status?: string;
+  notes?: string;
+}
+
+export interface PhysicalExamination {
+  bloodPressure?: string;
+  bodyParts?: Record<string, PhysicalExamBodyPart>;
+  notes?: string;
+}
+
+export interface VisionExamination {
+  rightEye?: string;
+  leftEye?: string;
+  bothEyes?: string;
+  farRight?: string;
+  farLeft?: string;
+  colorBlindness?: string;
+  notes?: string;
+}
+
+export interface AdditionalExamItem {
+  id: string;
+  name: string;
+  status: string;
+  notes?: string;
+}
+
+export interface SupportingExamItem {
+  status?: string;
+  notes?: string;
+}
+
+export interface SupportingExamination {
+  mainExams?: Record<string, SupportingExamItem>;
+  additionalExams?: AdditionalExamItem[];
+  notes?: string;
+}
+
+export interface DoctorConclusion {
+  conclusion?: string;
+  recommendation?: string;
+  finalResult?: 'FIT' | 'FIT_DENGAN_CATATAN' | 'UNFIT' | '';
+  doctorName?: string;
+  doctorSignature?: string;
+  date?: string;
+  notes?: string;
+}
+
 export interface MCURecord {
+  id: string;
   patientId: string;
-  status: MCUStatus;
-  updatedAt: string;
-  anamnesis?: AnamnesisData;
   generalExamination?: GeneralExamination;
+  anamnesis?: Anamnesis;
+  medicalHistory?: Record<string, MedicalHistoryItem>;
+  vaccinationHistory?: Record<string, VaccinationItem>;
+  lifestyle?: Lifestyle;
   physicalExamination?: PhysicalExamination;
   visionExamination?: VisionExamination;
   supportingExamination?: SupportingExamination;
   doctorConclusion?: DoctorConclusion;
-  medicalHistory?: MedicalHistory;
-  vaccinationHistory?: VaccinationHistory;
-  lifestyle?: Lifestyle;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
-export interface LabResult {
-  id: string;
-  patientId: string;
-  patientName: string;
-  mcuNumber: string;
-  fileName: string;
-  fileDataUrl: string;
-  fileData?: string;
-  uploadDate: string;
-  notes?: string;
-}
-
-export type DocumentCategory = 'LAB' | 'RADIOLOGY';
+export type DocumentCategory = 'RADIOLOGY' | 'LAB' | 'EKG' | 'GENERAL' | string;
 
 export interface MCUDocument {
   id: string;
-  patientId: string;
-  mcuNumber: string;
-  patientName: string;
-  identityNumber?: string;
-  fileName: string;
-  fileSize: number;
-  fileBlob: Blob;
-  uploadDate: string;
-  category: DocumentCategory;
-  notes?: string;
+  patientId?: string;
+  fileName?: string;
+  patientName?: string;
+  mcuNumber?: string;
+  fileSize?: number;
+  fileBlob?: Blob | File;
+  fileUrl?: string;
+  createdAt?: string;
+  uploadDate?: string;
+  category?: DocumentCategory;
 }
 
-export interface MCUDocumentMetadata {
-  id: string;
-  patientId: string;
-  mcuNumber: string;
-  patientName: string;
-  identityNumber?: string;
-  fileName: string;
-  fileSize: number;
-  uploadDate: string;
-  category: DocumentCategory;
+export interface LabResult {
+  id?: string;
+  patientId?: string;
+  testName?: string;
+  result?: string;
+  unit?: string;
+  referenceRange?: string;
+  status?: string;
   notes?: string;
+  date?: string;
+  uploadDate?: string;
+  fileDataUrl?: string; // Tambahkan ini
+  fileData?: string;    // Tambahkan ini
 }

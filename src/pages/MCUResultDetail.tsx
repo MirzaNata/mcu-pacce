@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   ArrowLeft, 
@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { mcuService } from '../services/mcuService';
 import { patientService } from '../services/patientService';
-import type { MCURecord } from '../types';
+import type { Patient, MCURecord } from '../types';
 
 const ANAMNESIS_COMPLAINTS_MAP: Record<string, string> = {
   nyeri_dada: 'Nyeri dada',
@@ -112,16 +112,39 @@ export const MCUResultDetail = () => {
   const navigate = useNavigate();
 
   const [showPreview, setShowPreview] = useState(false);
+  const [patient, setPatient] = useState<Patient | null>(null);
+  const [mcuData, setMcuData] = useState<MCURecord | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
 
-  const [patient] = useState(() => (id ? patientService.getPatientById(id) : null));
-  const [mcuData] = useState<MCURecord | null>(() => 
-    id ? mcuService.getMCUByPatientId(id) || mcuService.initializeOrGetMCU(id) : null
-  );
+  useEffect(() => {
+    let isMounted = true;
+    if (id) {
+      setLoading(true);
+      Promise.all([
+        patientService.getPatientById(id),
+        mcuService.getMCUByPatientId(id).then((res) => res || mcuService.initializeOrGetMCU(id)),
+      ])
+        .then(([patientRes, mcuRes]) => {
+          if (isMounted) {
+            setPatient(patientRes);
+            setMcuData(mcuRes);
+            setLoading(false);
+          }
+        })
+        .catch((err) => {
+          console.error('Gagal mengambil detail hasil MCU:', err);
+          if (isMounted) setLoading(false);
+        });
+    }
+    return () => {
+      isMounted = false;
+    };
+  }, [id]);
 
-  if (!patient || !mcuData) {
+  if (loading || !patient || !mcuData) {
     return (
       <div className="p-8 text-center text-gray-500 font-medium">
-        Memuat detail hasil MCU...
+        Memuat detail hasil MCU dari Supabase...
       </div>
     );
   }
@@ -412,7 +435,7 @@ export const MCUResultDetail = () => {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {PHYSICAL_EXAM_ITEMS.map((item) => {
-            const data = mcuData.physicalExamination?.bodyParts?.[item.id] || {};
+            const data = (mcuData.physicalExamination?.bodyParts?.[item.id] || {}) as { status?: string; notes?: string };
             return (
               <div key={item.id} className="p-3 bg-gray-50/80 rounded-xl border border-gray-200 flex justify-between items-center text-xs">
                 <div>
@@ -460,7 +483,7 @@ export const MCUResultDetail = () => {
             </thead>
             <tbody className="divide-y divide-gray-100">
               {SUPPORTING_EXAM_ITEMS.map((item) => {
-                const data = mcuData.supportingExamination?.mainExams?.[item.id] || {};
+                const data = (mcuData.supportingExamination?.mainExams?.[item.id] || {}) as { status?: string; notes?: string };
                 return (
                   <tr key={item.id} className="hover:bg-gray-50/60">
                     <td className="p-3 font-semibold text-gray-800">{item.label}</td>
@@ -687,7 +710,7 @@ export const MCUResultDetail = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
                   {PHYSICAL_EXAM_ITEMS.map((item) => {
-                    const data = mcuData.physicalExamination?.bodyParts?.[item.id] || {};
+                    const data = (mcuData.physicalExamination?.bodyParts?.[item.id] || {}) as { status?: string; notes?: string };
                     return (
                       <div key={item.id} className="flex justify-between border-b border-gray-200 py-0.5">
                         <span className="font-medium text-gray-800">{item.label}</span>
@@ -721,7 +744,7 @@ export const MCUResultDetail = () => {
                   </thead>
                   <tbody>
                     {SUPPORTING_EXAM_ITEMS.map((item) => {
-                      const data = mcuData.supportingExamination?.mainExams?.[item.id] || {};
+                      const data = (mcuData.supportingExamination?.mainExams?.[item.id] || {}) as { status?: string; notes?: string };
                       return (
                         <tr key={item.id}>
                           <td className="border border-gray-300 p-1 font-semibold">{item.label}</td>

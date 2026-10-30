@@ -1,5 +1,5 @@
-import { useEffect, useMemo } from 'react';
-import { X, ExternalLink, FileText, AlertCircle } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, Download, Printer, FileText } from 'lucide-react';
 import type { MCUDocument } from '../types';
 
 interface PDFPreviewModalProps {
@@ -7,65 +7,83 @@ interface PDFPreviewModalProps {
   onClose: () => void;
 }
 
-export const PDFPreviewModal = ({ document, onClose }: PDFPreviewModalProps) => {
-  // Menghitung URL PDF secara deklaratif tanpa setState di useEffect
-  const pdfUrl = useMemo(() => {
-    if (document && document.fileBlob) {
-      return URL.createObjectURL(document.fileBlob);
-    }
-    return null;
-  }, [document]);
+export const PDFPreviewModal: React.FC<PDFPreviewModalProps> = ({
+  document,
+  onClose,
+}) => {
+  const [pdfUrl, setPdfUrl] = useState<string>('');
 
-  // Cleanup pembersihan memori URL saat pdfUrl berubah atau modal ditutup
   useEffect(() => {
-    return () => {
-      if (pdfUrl) {
-        URL.revokeObjectURL(pdfUrl);
+    if (document) {
+      if (document.fileBlob) {
+        const url = URL.createObjectURL(document.fileBlob);
+        setPdfUrl(url);
+        return () => URL.revokeObjectURL(url);
+      } else if (document.fileUrl) {
+        setPdfUrl(document.fileUrl);
       }
-    };
-  }, [pdfUrl]);
+    }
+  }, [document]);
 
   if (!document) return null;
 
-  const handleOpenNewTab = () => {
+  const formatFileSize = (bytes?: number) => {
+    if (!bytes) return '0 KB';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  const handlePrint = () => {
     if (pdfUrl) {
-      window.open(pdfUrl, '_blank');
+      const printWindow = window.open(pdfUrl, '_blank');
+      printWindow?.print();
     }
   };
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-  };
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-xs">
-      <div className="bg-white rounded-2xl w-full max-w-5xl h-[90vh] flex flex-col shadow-2xl overflow-hidden border border-gray-100">
+    <div className="fixed inset-0 z-50 bg-black/70 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-white rounded-2xl max-w-4xl w-full h-[85vh] flex flex-col shadow-2xl relative overflow-hidden">
+        {/* HEADER MODAL */}
         <div className="flex items-center justify-between p-4 border-b border-gray-100 bg-gray-50/50">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-50 text-blue-600 rounded-xl">
               <FileText className="w-5 h-5" />
             </div>
             <div>
-              <h3 className="text-sm font-bold text-gray-900">{document.fileName}</h3>
-              <p className="text-xs text-gray-500">
-                {document.patientName} • No. MCU: <span className="font-mono font-bold text-blue-600">{document.mcuNumber}</span> • {formatFileSize(document.fileSize)}
+              <h3 className="text-sm font-bold text-gray-900">
+                {document.fileName || 'Laporan_MCU.pdf'}
+              </h3>
+              <p className="text-[11px] text-gray-500 font-medium">
+                {document.patientName || 'Peserta MCU'} • No. MCU:{' '}
+                <span className="font-mono font-bold text-blue-600">
+                  {document.mcuNumber || '-'}
+                </span>{' '}
+                • {formatFileSize(document.fileSize)}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
+            {pdfUrl && (
+              <>
+                <button
+                  onClick={handlePrint}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+                >
+                  <Printer className="w-4 h-4" /> Cetak
+                </button>
+                <a
+                  href={pdfUrl}
+                  download={document.fileName || 'Laporan_MCU.pdf'}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+                >
+                  <Download className="w-4 h-4" /> Unduh PDF
+                </a>
+              </>
+            )}
             <button
-              type="button"
-              onClick={handleOpenNewTab}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-bold rounded-xl transition-colors cursor-pointer"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              <span>Buka di Tab Baru</span>
-            </button>
-            <button
-              type="button"
               onClick={onClose}
               className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
             >
@@ -74,17 +92,17 @@ export const PDFPreviewModal = ({ document, onClose }: PDFPreviewModalProps) => 
           </div>
         </div>
 
-        <div className="flex-1 bg-gray-100 p-2 overflow-hidden flex items-center justify-center">
+        {/* PREVIEW CONTAINER */}
+        <div className="flex-1 bg-gray-100 p-2 overflow-hidden">
           {pdfUrl ? (
             <iframe
               src={pdfUrl}
+              title="PDF Preview"
               className="w-full h-full rounded-xl border border-gray-200 bg-white"
-              title={document.fileName}
             />
           ) : (
-            <div className="text-center p-8 text-gray-500 flex flex-col items-center gap-2">
-              <AlertCircle className="w-8 h-8 text-red-500" />
-              <p className="text-xs font-semibold">Gagal memuat dokumen PDF.</p>
+            <div className="w-full h-full flex items-center justify-center text-gray-400 text-xs font-medium">
+              Pratinjau dokumen tidak tersedia.
             </div>
           )}
         </div>

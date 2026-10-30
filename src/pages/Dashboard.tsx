@@ -1,149 +1,186 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
   Users, 
-  CheckCircle, 
+  FileText, 
+  CheckCircle2, 
   Clock, 
-  AlertCircle, 
-  PlusCircle, 
-  ArrowRight,
-  FileText
+  Search, 
+  Activity
 } from 'lucide-react';
 import { patientService } from '../services/patientService';
-import type { Patient } from '../types';
+import { mcuService } from '../services/mcuService';
+import type { Patient, MCURecord } from '../types';
 
 export const Dashboard = () => {
   const navigate = useNavigate();
-  const [patients] = useState<Patient[]>(() => patientService.getPatients());
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [mcuRecords, setMcuRecords] = useState<Record<string, MCURecord>>({});
+  const [loading, setLoading] = useState<boolean>(true);
+  const [searchTerm, setSearchTerm] = useState('');
+
+  useEffect(() => {
+    let isMounted = true;
+    const loadDashboardData = async () => {
+      try {
+        setLoading(true);
+        const data = await patientService.getPatients();
+        if (isMounted) setPatients(data);
+
+        const mcuMap: Record<string, MCURecord> = {};
+        for (const p of data) {
+          const rec = await mcuService.getMCUByPatientId(p.id);
+          if (rec) mcuMap[p.id] = rec;
+        }
+        if (isMounted) setMcuRecords(mcuMap);
+      } catch (err) {
+        console.error('Gagal memuat data dashboard:', err);
+      } finally {
+        if (isMounted) setLoading(false);
+      }
+    };
+
+    loadDashboardData();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const totalPatients = patients.length;
-  const completedMcu = patients.filter((p: Patient) => p.status === 'SELESAI').length;
-  const inProgressMcu = patients.filter((p: Patient) => p.status === 'DALAM_PROSES' || p.status === 'MENUNGGU_DOKTER').length;
-  const pendingMcu = patients.filter((p: Patient) => p.status === 'BELUM_MULAI').length;
+  let fitCount = 0;
+  let fitCatatanCount = 0;
+  let unfitCount = 0;
+  let pendingCount = 0;
 
-  const recentPatients = patients.slice(0, 5);
+  patients.forEach((p) => {
+    const res = mcuRecords[p.id]?.doctorConclusion?.finalResult;
+    if (res === 'FIT') fitCount++;
+    else if (res === 'FIT_DENGAN_CATATAN') fitCatatanCount++;
+    else if (res === 'UNFIT') unfitCount++;
+    else pendingCount++;
+  });
+
+  const filteredPatients = patients.filter((p) => {
+    const query = searchTerm.toLowerCase();
+    const matchName = p.fullName.toLowerCase().includes(query);
+    const matchMcu = (p.mcuNumber || '').toLowerCase().includes(query);
+    const matchCompany = (p.company || p.companyName || '').toLowerCase().includes(query);
+    return matchName || matchMcu || matchCompany;
+  });
+
+  if (loading) {
+    return (
+      <div className="p-8 text-center text-gray-500 font-medium">
+        Memuat data dashboard...
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900">Dashboard Utama MCU</h1>
-          <p className="text-sm text-gray-500 mt-1">
-            Ringkasan statistik dan aktivitas pemeriksaan peserta MCU Klinik Pakisaji Cardiovascular Center
-          </p>
-        </div>
-        <button
-          onClick={() => navigate('/patients')}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold transition-colors cursor-pointer shadow-xs"
-        >
-          <PlusCircle className="w-4 h-4" />
-          <span>Kelola Peserta</span>
-        </button>
+      <div className="border-b border-gray-100 pb-4">
+        <h1 className="text-xl font-black text-gray-900">Dashboard Utama MCU</h1>
+        <p className="text-xs text-gray-500 font-medium mt-0.5">
+          Pakisaji Cardiovascular Center — Sistem Informasi Medical Check-Up
+        </p>
       </div>
 
+      {/* STATS CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-xs flex items-center gap-4">
-          <div className="p-3 bg-blue-50 text-blue-600 rounded-xl">
+        <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
+          <div>
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Total Peserta</span>
+            <span className="text-2xl font-black text-gray-900 mt-1 block">{totalPatients}</span>
+          </div>
+          <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl">
             <Users className="w-6 h-6" />
           </div>
+        </div>
+
+        <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
           <div>
-            <p className="text-xs font-bold text-gray-400 uppercase">Total Peserta</p>
-            <h3 className="text-2xl font-black text-gray-900 mt-0.5">{totalPatients}</h3>
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Status FIT</span>
+            <span className="text-2xl font-black text-green-600 mt-1 block">{fitCount}</span>
+          </div>
+          <div className="p-3 bg-green-50 text-green-600 rounded-2xl">
+            <CheckCircle2 className="w-6 h-6" />
           </div>
         </div>
 
-        <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-xs flex items-center gap-4">
-          <div className="p-3 bg-green-50 text-green-600 rounded-xl">
-            <CheckCircle className="w-6 h-6" />
-          </div>
+        <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
           <div>
-            <p className="text-xs font-bold text-gray-400 uppercase">MCU Selesai</p>
-            <h3 className="text-2xl font-black text-gray-900 mt-0.5">{completedMcu}</h3>
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">FIT Catatan / Unfit</span>
+            <span className="text-2xl font-black text-amber-600 mt-1 block">{fitCatatanCount + unfitCount}</span>
+          </div>
+          <div className="p-3 bg-amber-50 text-amber-600 rounded-2xl">
+            <Activity className="w-6 h-6" />
           </div>
         </div>
 
-        <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-xs flex items-center gap-4">
-          <div className="p-3 bg-amber-50 text-amber-600 rounded-xl">
+        <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-xs flex items-center justify-between">
+          <div>
+            <span className="text-xs font-bold text-gray-400 uppercase tracking-wider block">Proses Pemeriksaan</span>
+            <span className="text-2xl font-black text-blue-600 mt-1 block">{pendingCount}</span>
+          </div>
+          <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl">
             <Clock className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-gray-400 uppercase">Dalam Proses</p>
-            <h3 className="text-2xl font-black text-gray-900 mt-0.5">{inProgressMcu}</h3>
-          </div>
-        </div>
-
-        <div className="p-5 bg-white rounded-2xl border border-gray-100 shadow-xs flex items-center gap-4">
-          <div className="p-3 bg-gray-100 text-gray-600 rounded-xl">
-            <AlertCircle className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-xs font-bold text-gray-400 uppercase">Belum Mulai</p>
-            <h3 className="text-2xl font-black text-gray-900 mt-0.5">{pendingMcu}</h3>
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-xs overflow-hidden">
-        <div className="p-5 border-b border-gray-100 flex items-center justify-between">
-          <h2 className="font-bold text-gray-900 text-sm">Peserta MCU Pendaftaran Terbaru</h2>
-          <button
-            onClick={() => navigate('/patients')}
-            className="text-xs font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer"
-          >
-            Lihat Semua <ArrowRight className="w-3.5 h-3.5" />
-          </button>
+      {/* QUICK RECENT PATIENTS */}
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-xs p-5 space-y-4">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b border-gray-100 pb-3">
+          <h2 className="text-sm font-bold text-gray-900">Peserta Terbaru Registered</h2>
+          
+          <div className="relative w-full sm:w-64">
+            <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Cari peserta..."
+              className="w-full pl-9 pr-3 py-1.5 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-hidden focus:ring-2 focus:ring-blue-500"
+            />
+          </div>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm border-collapse">
+          <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-200 text-gray-700 font-bold text-xs uppercase">
-                <th className="p-3.5">No. MCU</th>
-                <th className="p-3.5">Nama Peserta / NIK</th>
-                <th className="p-3.5">Perusahaan</th>
-                <th className="p-3.5 text-center">Status</th>
-                <th className="p-3.5 text-center">Aksi</th>
+              <tr className="bg-gray-50 border-b border-gray-200 text-gray-500 font-bold uppercase">
+                <th className="p-3">Nama Peserta</th>
+                <th className="p-3">No. MCU</th>
+                <th className="p-3">Perusahaan</th>
+                <th className="p-3 text-center">Status Kesimpulan</th>
+                <th className="p-3 text-center">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {recentPatients.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="p-8 text-center text-xs text-gray-500">
-                    Belum ada data peserta terdaftar.
-                  </td>
-                </tr>
-              ) : (
-                recentPatients.map((p: Patient) => (
-                  <tr key={p.id} className="hover:bg-gray-50/70 transition-colors">
-                    <td className="p-3.5 font-mono text-xs font-bold text-blue-600">{p.mcuNumber}</td>
-                    <td className="p-3.5">
-                      <div className="font-bold text-gray-900 text-xs">{p.fullName}</div>
-                      <div className="text-[11px] text-gray-500 font-mono mt-0.5">NIK: {p.identityNumber}</div>
+              {filteredPatients.slice(0, 10).map((p) => {
+                const res = mcuRecords[p.id]?.doctorConclusion?.finalResult;
+                return (
+                  <tr key={p.id} className="hover:bg-gray-50/60 transition-colors">
+                    <td className="p-3 font-bold text-gray-900">{p.fullName}</td>
+                    <td className="p-3 font-mono font-bold text-blue-600">{p.mcuNumber || '-'}</td>
+                    <td className="p-3 text-gray-700">{p.company || p.companyName || '-'}</td>
+                    <td className="p-3 text-center font-bold">
+                      {res === 'FIT' && <span className="text-green-600">FIT</span>}
+                      {res === 'FIT_DENGAN_CATATAN' && <span className="text-amber-600">FIT CATATAN</span>}
+                      {res === 'UNFIT' && <span className="text-red-600">UNFIT</span>}
+                      {!res && <span className="text-gray-400 font-normal">Pending</span>}
                     </td>
-                    <td className="p-3.5 text-xs text-gray-700">{p.companyName || '-'}</td>
-                    <td className="p-3.5 text-center">
-                      <span className="px-2.5 py-1 text-[11px] font-bold rounded-lg bg-blue-50 text-blue-700 border border-blue-200">
-                        {p.status === 'SELESAI'
-                          ? 'Selesai'
-                          : p.status === 'MENUNGGU_DOKTER'
-                          ? 'Menunggu Dokter'
-                          : p.status === 'DALAM_PROSES'
-                          ? 'Dalam Proses'
-                          : 'Belum Mulai'}
-                      </span>
-                    </td>
-                    <td className="p-3.5 text-center">
+                    <td className="p-3 text-center">
                       <button
-                        onClick={() => navigate(`/examination/${p.id}`)}
-                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer"
-                        title="Buka Examination"
+                        onClick={() => navigate(`/mcu-examination/${p.id}`)}
+                        className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors cursor-pointer inline-flex items-center gap-1 font-bold"
                       >
-                        <FileText className="w-4 h-4" />
+                        <FileText className="w-3.5 h-3.5" /> Periksa
                       </button>
                     </td>
                   </tr>
-                ))
-              )}
+                );
+              })}
             </tbody>
           </table>
         </div>

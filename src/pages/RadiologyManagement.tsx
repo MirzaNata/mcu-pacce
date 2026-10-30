@@ -1,417 +1,243 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { 
+  Search, 
   Upload, 
-  FileText, 
   Trash2, 
   Eye, 
-  Search, 
-  X, 
-  AlertCircle, 
-  CheckCircle2, 
-  Scan,
-  Plus,
-  Loader2
+  FileText, 
+  Radio, 
+  X 
 } from 'lucide-react';
 import { patientService } from '../services/patientService';
 import { documentStorageService } from '../services/documentStorageService';
 import { PDFPreviewModal } from '../components/PDFPreviewModal';
 import type { Patient, MCUDocument } from '../types';
 
-const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
-
 export const RadiologyManagement = () => {
-  const [patients, setPatients] = useState<Patient[]>(() => patientService.getPatients());
+  const [patients, setPatients] = useState<Patient[]>([]);
   const [documents, setDocuments] = useState<MCUDocument[]>([]);
+  const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [loading, setLoading] = useState(true);
-
-  // Upload Modal State
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
-  const [selectedPatientId, setSelectedPatientId] = useState('');
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [uploadNotes, setUploadNotes] = useState('');
-  const [uploadError, setUploadError] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
-
-  // Preview & Delete State
+  
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState<boolean>(false);
   const [previewDoc, setPreviewDoc] = useState<MCUDocument | null>(null);
-  const [deleteDoc, setDeleteDoc] = useState<MCUDocument | null>(null);
-  const [notification, setNotification] = useState<string | null>(null);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      const [patientData, docData] = await Promise.all([
+        patientService.getPatients(),
+        documentStorageService.getDocuments(),
+      ]);
+      setPatients(patientData);
+      setDocuments(docData);
+    } catch (err) {
+      console.error('Gagal memuat data radiologi:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    let isMounted = true;
-
-    const fetchDocuments = async () => {
-      try {
-        const docs = await documentStorageService.getDocumentsByCategory('RADIOLOGY');
-        if (isMounted) {
-          setDocuments(docs);
-        }
-      } catch (err) {
-        console.error('Gagal memuat dokumen radiologi:', err);
-      } finally {
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    fetchDocuments();
-
-    return () => {
-      isMounted = false;
-    };
+    fetchData();
   }, []);
 
-  const refreshData = async () => {
-    setPatients(patientService.getPatients());
-    try {
-      const docs = await documentStorageService.getDocumentsByCategory('RADIOLOGY');
-      setDocuments(docs);
-    } catch (err) {
-      console.error('Gagal memperbarui data radiologi:', err);
-    }
-  };
-
-  const showNotification = (msg: string) => {
-    setNotification(msg);
-    setTimeout(() => setNotification(null), 3000);
-  };
-
-  const handleOpenUploadModal = (patientId?: string) => {
-    if (patientId) setSelectedPatientId(patientId);
-    else if (patients.length > 0) setSelectedPatientId(patients[0].id);
-    setSelectedFile(null);
-    setUploadNotes('');
-    setUploadError('');
-    setIsUploadModalOpen(true);
-  };
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) {
-      setUploadError('Format file tidak valid. Hanya file PDF yang diperbolehkan.');
-      setSelectedFile(null);
-      return;
-    }
-
-    if (file.size > MAX_FILE_SIZE) {
-      setUploadError('Ukuran file melebihi batas maksimum 10 MB.');
-      setSelectedFile(null);
-      return;
-    }
-
-    setUploadError('');
-    setSelectedFile(file);
-  };
-
-  const handleSaveDocument = async (e: React.FormEvent) => {
+  const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedPatientId) {
-      setUploadError('Silakan pilih peserta MCU terlebih dahulu.');
-      return;
-    }
-    if (!selectedFile) {
-      setUploadError('Silakan pilih file PDF hasil radiologi.');
-      return;
-    }
+    if (!selectedPatient || !uploadFile) return;
 
-    const patient = patients.find((p) => p.id === selectedPatientId);
-    if (!patient) {
-      setUploadError('Data peserta tidak ditemukan.');
-      return;
-    }
-
-    setIsSaving(true);
     try {
-      await documentStorageService.saveDocument({
-        patientId: patient.id,
-        mcuNumber: patient.mcuNumber,
-        patientName: patient.fullName,
-        identityNumber: patient.identityNumber,
-        fileName: selectedFile.name,
-        fileSize: selectedFile.size,
-        fileBlob: selectedFile,
+      setUploading(true);
+      await documentStorageService.uploadDocument({
+        patientId: selectedPatient.id,
+        fileName: uploadFile.name,
+        fileBlob: uploadFile,
+        patientName: selectedPatient.fullName,
+        mcuNumber: selectedPatient.mcuNumber || '',
+        fileSize: uploadFile.size,
         uploadDate: new Date().toISOString().split('T')[0],
         category: 'RADIOLOGY',
-        notes: uploadNotes.trim(),
       });
-
-      showNotification(`Dokumen radiologi peserta ${patient.fullName} berhasil disimpan!`);
-      setIsUploadModalOpen(false);
-      await refreshData();
+      
+      setUploadFile(null);
+      setSelectedPatient(null);
+      await fetchData();
     } catch (err) {
-      console.error(err);
-      setUploadError('Gagal menyimpan dokumen radiologi.');
+      console.error('Gagal mengunggah berkas radiologi:', err);
     } finally {
-      setIsSaving(false);
+      setUploading(false);
     }
   };
 
-  const handleDeleteConfirm = async () => {
-    if (!deleteDoc) return;
-    try {
-      await documentStorageService.deleteDocument(deleteDoc.id);
-      showNotification(`Dokumen "${deleteDoc.fileName}" berhasil dihapus.`);
-      setDeleteDoc(null);
-      await refreshData();
-    } catch (err) {
-      console.error(err);
-      showNotification('Gagal menghapus dokumen.');
+  const handleDelete = async (doc: MCUDocument) => {
+    if (!doc.id) return;
+    if (window.confirm(`Hapus dokumen ${doc.fileName}?`)) {
+      await documentStorageService.deleteDocument(doc.id);
+      await fetchData();
     }
   };
 
   const filteredPatients = patients.filter((p) => {
     const q = searchTerm.toLowerCase();
-    return (
-      p.fullName.toLowerCase().includes(q) ||
-      p.mcuNumber.toLowerCase().includes(q) ||
-      p.identityNumber.toLowerCase().includes(q)
-    );
+    const matchName = p.fullName.toLowerCase().includes(q);
+    const matchMcu = (p.mcuNumber || '').toLowerCase().includes(q);
+    const matchNik = (p.nik || p.identityNumber || '').toLowerCase().includes(q);
+
+    return matchName || matchMcu || matchNik;
   });
+
+  if (loading) {
+    return (
+      <div className="p-8 text-center text-gray-500 font-medium">
+        Memuat data manajemen radiologi...
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-gray-100 pb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <Scan className="w-6 h-6 text-blue-600" />
-            <h1 className="text-xl font-black text-gray-900">Manajemen Dokumen Radiologi</h1>
-          </div>
-          <p className="text-xs text-gray-500 mt-1">
-            Pengunggahan dan pengelolaan berkas PDF hasil pencitraan radiologi (Rontgen, USG, dll.) peserta MCU
-          </p>
-        </div>
-
-        <button
-          onClick={() => handleOpenUploadModal()}
-          className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold shadow-xs transition-colors cursor-pointer"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Unggah Hasil Radiologi</span>
-        </button>
+      <div className="border-b border-gray-100 pb-4">
+        <h1 className="text-xl font-black text-gray-900">Manajemen Berkas Radiologi & Rontgen</h1>
+        <p className="text-xs text-gray-500 font-medium mt-0.5">
+          Unggah dan kelola hasil foto Thorax, Rontgen, serta dokumen radiologi peserta MCU
+        </p>
       </div>
 
-      {notification && (
-        <div className="p-3.5 bg-green-50 border border-green-200 text-green-800 text-xs font-bold rounded-2xl flex items-center gap-2 animate-fade-in shadow-xs">
-          <CheckCircle2 className="w-4 h-4 text-green-600 shrink-0" />
-          <span>{notification}</span>
+      {/* SEARCH BAR */}
+      <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-xs">
+        <div className="relative w-full max-w-md">
+          <Search className="w-4 h-4 text-gray-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            placeholder="Cari Peserta, No. MCU, atau NIK..."
+            className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-hidden focus:ring-2 focus:ring-blue-500"
+          />
         </div>
-      )}
-
-      <div className="bg-white p-4 rounded-2xl border border-gray-100 shadow-xs flex items-center gap-3">
-        <Search className="w-4 h-4 text-gray-400 shrink-0" />
-        <input
-          type="text"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          placeholder="Cari berdasarkan nama peserta, No. MCU, atau NIK..."
-          className="w-full text-xs font-medium outline-hidden placeholder:text-gray-400"
-        />
       </div>
 
+      {/* PATIENTS & RADIOLOGY DOCS TABLE */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-sm border-collapse">
+          <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="bg-gray-50 border-b border-gray-200 text-gray-700 font-bold text-xs uppercase">
-                <th className="p-3.5">No. MCU</th>
-                <th className="p-3.5">Nama Peserta / NIK</th>
-                <th className="p-3.5 text-center">Status Radiologi</th>
-                <th className="p-3.5">Dokumen Tersimpan</th>
-                <th className="p-3.5 text-center">Aksi</th>
+              <tr className="bg-gray-50 border-b border-gray-200 text-gray-500 font-bold uppercase">
+                <th className="p-4">Peserta / No. MCU</th>
+                <th className="p-4">Perusahaan</th>
+                <th className="p-4">Dokumen Radiologi Terunggah</th>
+                <th className="p-4 text-center">Aksi</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {loading ? (
-                <tr>
-                  <td colSpan={5} className="p-8 text-center text-xs text-gray-500 font-medium">
-                    <Loader2 className="w-5 h-5 animate-spin mx-auto mb-2 text-blue-600" />
-                    Memuat data dokumen radiologi...
-                  </td>
-                </tr>
-              ) : filteredPatients.length === 0 ? (
-                <tr>
-                  <td colSpan={5} className="p-8 text-center text-xs text-gray-500 font-medium">
-                    Tidak ada data peserta MCU yang sesuai pencarian.
-                  </td>
-                </tr>
-              ) : (
-                filteredPatients.map((patient) => {
-                  const patientDocs = documents.filter((d) => d.patientId === patient.id);
-                  const hasDocs = patientDocs.length > 0;
+              {filteredPatients.map((patient) => {
+                const patientDocs = documents.filter((d) => d.patientId === patient.id);
 
-                  return (
-                    <tr key={patient.id} className="hover:bg-gray-50/70 transition-colors">
-                      <td className="p-3.5 font-mono text-xs font-bold text-blue-600">
-                        {patient.mcuNumber}
-                      </td>
-                      <td className="p-3.5">
-                        <div className="font-bold text-gray-900 text-xs">{patient.fullName}</div>
-                        <div className="text-[11px] text-gray-500 font-mono mt-0.5">NIK: {patient.identityNumber}</div>
-                      </td>
-                      <td className="p-3.5 text-center">
-                        <span
-                          className={`px-2.5 py-1 text-[11px] font-bold rounded-lg border ${
-                            hasDocs
-                              ? 'bg-green-50 text-green-700 border-green-200'
-                              : 'bg-amber-50 text-amber-700 border-amber-200'
-                          }`}
-                        >
-                          {hasDocs ? `Sudah Diunggah (${patientDocs.length} File)` : 'Belum Ada File'}
-                        </span>
-                      </td>
-                      <td className="p-3.5">
-                        {hasDocs ? (
-                          <div className="space-y-1.5">
-                            {patientDocs.map((doc) => (
-                              <div
-                                key={doc.id}
-                                className="flex items-center justify-between p-2 bg-gray-50 rounded-xl border border-gray-200 text-xs gap-2"
-                              >
-                                <div className="flex items-center gap-2 truncate">
-                                  <FileText className="w-4 h-4 text-blue-600 shrink-0" />
-                                  <span className="font-medium text-gray-800 truncate">{doc.fileName}</span>
-                                  <span className="text-[10px] text-gray-400">({doc.uploadDate})</span>
-                                </div>
-                                <div className="flex items-center gap-1 shrink-0">
-                                  <button
-                                    type="button"
-                                    onClick={() => setPreviewDoc(doc)}
-                                    className="p-1 text-blue-600 hover:bg-blue-100 rounded-lg transition-colors cursor-pointer"
-                                    title="Lihat PDF"
-                                  >
-                                    <Eye className="w-3.5 h-3.5" />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => setDeleteDoc(doc)}
-                                    className="p-1 text-red-500 hover:bg-red-100 rounded-lg transition-colors cursor-pointer"
-                                    title="Hapus PDF"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                </div>
+                return (
+                  <tr key={patient.id} className="hover:bg-gray-50/60 transition-colors">
+                    <td className="p-4">
+                      <div className="font-bold text-gray-900">{patient.fullName}</div>
+                      <div className="font-mono text-blue-600 font-bold text-[11px]">{patient.mcuNumber || '-'}</div>
+                    </td>
+                    <td className="p-4 text-gray-700">{patient.company || patient.companyName || '-'}</td>
+                    <td className="p-4">
+                      {patientDocs.length === 0 ? (
+                        <span className="text-gray-400 italic text-[11px]">Belum ada berkas radiologi</span>
+                      ) : (
+                        <div className="space-y-1">
+                          {patientDocs.map((doc) => (
+                            <div key={doc.id} className="flex items-center justify-between gap-2 p-1.5 bg-gray-50 rounded-lg border border-gray-200">
+                              <div className="flex items-center gap-1.5 truncate">
+                                <FileText className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                                <span className="font-medium text-gray-800 truncate">{doc.fileName}</span>
+                                <span className="text-[10px] text-gray-400">({doc.uploadDate || '-'})</span>
                               </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="text-xs text-gray-400 italic">Belum ada hasil radiologi</span>
-                        )}
-                      </td>
-                      <td className="p-3.5 text-center">
-                        <button
-                          type="button"
-                          onClick={() => handleOpenUploadModal(patient.id)}
-                          className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-xl text-xs font-bold transition-colors cursor-pointer mx-auto"
-                        >
-                          <Upload className="w-3.5 h-3.5" />
-                          <span>Unggah File</span>
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
+                              <div className="flex items-center gap-1">
+                                <button
+                                  onClick={() => setPreviewDoc(doc)}
+                                  className="p-1 text-blue-600 hover:bg-blue-100 rounded-md transition-colors cursor-pointer"
+                                  title="Pratinjau"
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => handleDelete(doc)}
+                                  className="p-1 text-red-600 hover:bg-red-100 rounded-md transition-colors cursor-pointer"
+                                  title="Hapus"
+                                >
+                                  <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </td>
+                    <td className="p-4 text-center">
+                      <button
+                        onClick={() => setSelectedPatient(patient)}
+                        className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl transition-all cursor-pointer inline-flex items-center gap-1.5"
+                      >
+                        <Upload className="w-3.5 h-3.5" /> Unggah Foto
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       </div>
 
-      {/* Modal Upload PDF */}
-      {isUploadModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full p-6 shadow-xl">
-            <div className="flex items-center justify-between border-b pb-4 mb-4">
-              <h2 className="text-base font-bold text-gray-900">Unggah Hasil Radiologi (PDF)</h2>
+      {/* MODAL UPLOAD */}
+      {selectedPatient && (
+        <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl relative space-y-4">
+            <div className="flex items-center justify-between border-b pb-3">
+              <div className="flex items-center gap-2">
+                <Radio className="w-5 h-5 text-blue-600" />
+                <h3 className="font-bold text-sm text-gray-900">Unggah Berkas Radiologi</h3>
+              </div>
               <button
-                type="button"
-                onClick={() => setIsUploadModalOpen(false)}
-                className="p-1 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-lg cursor-pointer"
+                onClick={() => setSelectedPatient(null)}
+                className="p-1 text-gray-400 hover:text-gray-700 rounded-lg cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            {uploadError && (
-              <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 text-xs font-semibold rounded-xl flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 shrink-0" />
-                <span>{uploadError}</span>
-              </div>
-            )}
+            <p className="text-xs text-gray-600">
+              Unggah berkas foto Thorax/Rontgen untuk: <strong className="text-gray-900">{selectedPatient.fullName}</strong> ({selectedPatient.mcuNumber})
+            </p>
 
-            <form onSubmit={handleSaveDocument} className="space-y-4">
+            <form onSubmit={handleUpload} className="space-y-4 text-xs">
               <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
-                  Pilih Peserta MCU <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={selectedPatientId}
-                  onChange={(e) => setSelectedPatientId(e.target.value)}
-                  className="w-full p-2.5 bg-white border border-gray-200 rounded-xl text-xs font-medium cursor-pointer outline-hidden focus:ring-2 focus:ring-blue-500"
-                >
-                  {patients.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.fullName} ({p.mcuNumber}) - NIK: {p.identityNumber}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">
-                  File PDF Hasil Radiologi <span className="text-red-500">*</span>
-                </label>
+                <label className="block font-bold text-gray-700 mb-1">Pilih File PDF / Gambar</label>
                 <input
                   type="file"
-                  ref={fileInputRef}
-                  accept=".pdf,application/pdf"
-                  onChange={handleFileChange}
-                  className="hidden"
-                />
-                <button
-                  type="button"
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full p-4 border-2 border-dashed border-gray-300 hover:border-blue-500 rounded-2xl text-center bg-gray-50 hover:bg-blue-50/50 transition-colors cursor-pointer flex flex-col items-center gap-2"
-                >
-                  <Upload className="w-6 h-6 text-blue-600" />
-                  <span className="text-xs font-bold text-gray-700">
-                    {selectedFile ? selectedFile.name : 'Klik untuk memilih file PDF dari SIMRS'}
-                  </span>
-                  <span className="text-[10px] text-gray-400">Hanya format PDF (Maksimal 10 MB)</span>
-                </button>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-gray-700 mb-1">Catatan Dokumen (Opsional)</label>
-                <input
-                  type="text"
-                  value={uploadNotes}
-                  onChange={(e) => setUploadNotes(e.target.value)}
-                  placeholder="mis. Foto Thorax PA & Hasil Radiologi..."
-                  className="w-full p-2.5 bg-white border border-gray-200 rounded-xl text-xs font-medium outline-hidden focus:ring-2 focus:ring-blue-500"
+                  accept="application/pdf,image/*"
+                  required
+                  onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+                  className="w-full p-2 bg-gray-50 border border-gray-200 rounded-xl outline-hidden"
                 />
               </div>
 
-              <div className="flex justify-end gap-3 border-t pt-4 mt-6">
+              <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => setIsUploadModalOpen(false)}
-                  className="px-4 py-2 border border-gray-200 text-gray-600 hover:bg-gray-100 rounded-xl text-xs font-bold cursor-pointer"
+                  onClick={() => setSelectedPatient(null)}
+                  className="px-4 py-2 bg-gray-100 text-gray-700 font-bold rounded-xl cursor-pointer"
                 >
                   Batal
                 </button>
                 <button
                   type="submit"
-                  disabled={isSaving}
-                  className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-bold flex items-center gap-2 cursor-pointer disabled:opacity-50"
+                  disabled={uploading || !uploadFile}
+                  className="px-4 py-2 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 cursor-pointer disabled:opacity-50"
                 >
-                  {isSaving && <Loader2 className="w-4 h-4 animate-spin" />}
-                  <span>Simpan Dokumen</span>
+                  {uploading ? 'Mengunggah...' : 'Simpan Dokumen'}
                 </button>
               </div>
             </form>
@@ -419,36 +245,13 @@ export const RadiologyManagement = () => {
         </div>
       )}
 
-      {/* Modal Konfirmasi Hapus */}
-      {deleteDoc && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-xl space-y-4">
-            <h3 className="text-base font-bold text-gray-900">Konfirmasi Hapus Dokumen</h3>
-            <p className="text-xs text-gray-600">
-              Apakah Anda yakin ingin menghapus dokumen radiologi <strong>"{deleteDoc.fileName}"</strong> milik peserta <strong>{deleteDoc.patientName}</strong>?
-            </p>
-            <div className="flex justify-end gap-3 border-t pt-4">
-              <button
-                type="button"
-                onClick={() => setDeleteDoc(null)}
-                className="px-4 py-2 border border-gray-200 text-gray-600 hover:bg-gray-100 rounded-xl text-xs font-bold cursor-pointer"
-              >
-                Batal
-              </button>
-              <button
-                type="button"
-                onClick={handleDeleteConfirm}
-                className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded-xl text-xs font-bold cursor-pointer"
-              >
-                Hapus Dokumen
-              </button>
-            </div>
-          </div>
-        </div>
+      {/* PREVIEW MODAL */}
+      {previewDoc && (
+        <PDFPreviewModal
+          document={previewDoc}
+          onClose={() => setPreviewDoc(null)}
+        />
       )}
-
-      {/* Modal Pratinjau PDF */}
-      <PDFPreviewModal document={previewDoc} onClose={() => setPreviewDoc(null)} />
     </div>
   );
 };

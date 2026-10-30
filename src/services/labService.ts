@@ -1,74 +1,86 @@
+import { supabase } from '../lib/supabaseClient';
 import type { LabResult } from '../types';
 
-const STORAGE_KEY = 'mcu_lab_results';
-
-const getStoredLabResults = (): LabResult[] => {
-  const data = localStorage.getItem(STORAGE_KEY);
-  if (!data) return [];
-  try {
-    return JSON.parse(data) as LabResult[];
-  } catch {
-    return [];
-  }
-};
-
-const saveLabResults = (results: LabResult[]): void => {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(recordsData(results)));
-};
-
-const recordsData = (results: LabResult[]): LabResult[] => {
-  return results.map((r) => {
-    const dataUrl = r.fileDataUrl || r.fileData || '';
-    return {
-      ...r,
-      fileDataUrl: dataUrl,
-      fileData: dataUrl,
-    };
-  });
-};
-
 export const labService = {
-  getAllLabResults: (): LabResult[] => {
-    return recordsData(getStoredLabResults());
-  },
+  async getLabResultsByPatientId(patientId: string): Promise<LabResult[]> {
+    const { data, error } = await supabase
+      .from('lab_results')
+      .select('*')
+      .eq('patient_id', patientId)
+      .order('created_at', { ascending: false });
 
-  getLabResults: (): LabResult[] => {
-    return labService.getAllLabResults();
-  },
-
-  getLabResultByPatientId: (patientId: string): LabResult | undefined => {
-    const list = labService.getAllLabResults();
-    return list.find((r) => r.patientId === patientId);
-  },
-
-  uploadLabResult: (data: Omit<LabResult, 'id' | 'uploadDate'>): LabResult => {
-    const list = getStoredLabResults();
-    const existingIndex = list.findIndex((r) => r.patientId === data.patientId);
-
-    const dataUrl = data.fileDataUrl || data.fileData || '';
-    const newResult: LabResult = {
-      ...data,
-      fileDataUrl: dataUrl,
-      fileData: dataUrl,
-      id: `lab-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-      uploadDate: new Date().toISOString().split('T')[0],
-    };
-
-    if (existingIndex >= 0) {
-      list[existingIndex] = newResult;
-    } else {
-      list.unshift(newResult);
+    if (error) {
+      console.error('Gagal mengambil data laboratorium:', error);
+      return [];
     }
 
-    saveLabResults(list);
-    return newResult;
+    return (data || []).map((r: any) => ({
+      id: r.id,
+      patientId: r.patient_id,
+      testName: r.test_name,
+      result: r.result,
+      unit: r.unit,
+      referenceRange: r.reference_range,
+      status: r.status,
+      notes: r.notes,
+      date: r.date || r.upload_date || r.created_at?.split('T')[0],
+      uploadDate: r.upload_date || r.created_at?.split('T')[0],
+      fileDataUrl: r.file_data_url || r.fileDataUrl || r.fileData || '',
+      fileData: r.file_data || r.fileData || '',
+    }));
   },
 
-  deleteLabResult: (id: string): boolean => {
-    const list = getStoredLabResults();
-    const filtered = list.filter((r) => r.id !== id);
-    if (filtered.length === list.length) return false;
-    saveLabResults(filtered);
-    return true;
+  async saveLabResult(data: Omit<LabResult, 'id' | 'uploadDate'>): Promise<LabResult | null> {
+    const dataUrl = data.fileDataUrl || data.fileData || '';
+
+    const { data: inserted, error } = await supabase
+      .from('lab_results')
+      .insert([{
+        patient_id: data.patientId,
+        test_name: data.testName,
+        result: data.result,
+        unit: data.unit,
+        reference_range: data.referenceRange,
+        status: data.status,
+        notes: data.notes,
+        date: data.date || new Date().toISOString().split('T')[0],
+        upload_date: new Date().toISOString().split('T')[0],
+        file_data_url: dataUrl,
+      }])
+      .select()
+      .single();
+
+    if (error || !inserted) {
+      console.error('Gagal menyimpan hasil lab:', error);
+      return null;
+    }
+
+    return {
+      id: inserted.id,
+      patientId: inserted.patient_id,
+      testName: inserted.test_name,
+      result: inserted.result,
+      unit: inserted.unit,
+      referenceRange: inserted.reference_range,
+      status: inserted.status,
+      notes: inserted.notes,
+      date: inserted.date,
+      uploadDate: inserted.upload_date,
+      fileDataUrl: inserted.file_data_url,
+    };
   },
+
+  async deleteLabResult(id: string): Promise<boolean> {
+    const { error } = await supabase
+      .from('lab_results')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Gagal menghapus data lab:', error);
+      return false;
+    }
+
+    return true;
+  }
 };

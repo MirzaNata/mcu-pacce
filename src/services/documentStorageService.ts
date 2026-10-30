@@ -1,92 +1,92 @@
-import type { MCUDocument, DocumentCategory } from '../types';
+import { supabase } from '../lib/supabaseClient';
+import type { MCUDocument } from '../types';
 
-const DB_NAME = 'MCU_Clinic_DB';
-const DB_VERSION = 1;
-const STORE_NAME = 'mcu_documents';
+export const documentStorageService = {
+  async getDocuments(): Promise<MCUDocument[]> {
+    const { data, error } = await supabase
+      .from('mcu_documents')
+      .select('*')
+      .order('created_at', { ascending: false });
 
-class DocumentStorageService {
-  private dbPromise: Promise<IDBDatabase> | null = null;
+    if (error) {
+      console.error('Gagal mengambil daftar dokumen:', error);
+      return [];
+    }
 
-  private getDB(): Promise<IDBDatabase> {
-    if (this.dbPromise) return this.dbPromise;
+    return (data || []).map((doc: any) => ({
+      id: doc.id,
+      patientId: doc.patient_id,
+      fileName: doc.file_name,
+      patientName: doc.patient_name,
+      mcuNumber: doc.mcu_number,
+      fileSize: doc.file_size,
+      fileUrl: doc.file_url,
+      uploadDate: doc.upload_date || doc.created_at?.split('T')[0],
+      category: doc.category || 'RADIOLOGY',
+    }));
+  },
 
-    this.dbPromise = new Promise((resolve, reject) => {
-      const request = indexedDB.open(DB_NAME, DB_VERSION);
+  async uploadDocument(doc: Omit<MCUDocument, 'id'>): Promise<MCUDocument | null> {
+    let fileUrl = doc.fileUrl || '';
 
-      request.onupgradeneeded = (event) => {
-        const db = (event.target as IDBOpenDBRequest).result;
-        if (!db.objectStoreNames.contains(STORE_NAME)) {
-          const store = db.createObjectStore(STORE_NAME, { keyPath: 'id' });
-          store.createIndex('patientId', 'patientId', { unique: false });
-          store.createIndex('category', 'category', { unique: false });
-          store.createIndex('patientCategory', ['patientId', 'category'], { unique: false });
-        }
-      };
+    if (doc.fileBlob) {
+      const fileNamePath = `${Date.now()}_${doc.fileName || 'document.pdf'}`;
+      const { data: storageData, error: storageError } = await supabase.storage
+        .from('mcu-documents')
+        .upload(fileNamePath, doc.fileBlob);
 
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
-    });
+      if (!storageError && storageData) {
+        const { data: publicUrlData } = supabase.storage
+          .from('mcu-documents')
+          .getPublicUrl(fileNamePath);
+        fileUrl = publicUrlData?.publicUrl || '';
+      }
+    }
 
-    return this.dbPromise;
-  }
+    const { data, error } = await supabase
+      .from('mcu_documents')
+      .insert([{
+        patient_id: doc.patientId,
+        file_name: doc.fileName,
+        patient_name: doc.patientName,
+        mcu_number: doc.mcuNumber,
+        file_size: doc.fileSize,
+        file_url: fileUrl,
+        upload_date: doc.uploadDate || new Date().toISOString().split('T')[0],
+        category: doc.category || 'RADIOLOGY',
+      }])
+      .select()
+      .single();
 
-  async saveDocument(docData: Omit<MCUDocument, 'id'>): Promise<MCUDocument> {
-    const db = await this.getDB();
-    const newDoc: MCUDocument = {
-      ...docData,
-      id: `doc-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    if (error || !data) {
+      console.error('Gagal menyimpan record dokumen:', error);
+      return null;
+    }
+
+    return {
+      id: data.id,
+      patientId: data.patient_id,
+      fileName: data.file_name,
+      patientName: data.patient_name,
+      mcuNumber: data.mcu_number,
+      fileSize: data.file_size,
+      fileUrl: data.file_url,
+      uploadDate: data.upload_date,
+      category: data.category,
     };
+  },
 
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(STORE_NAME, 'readwrite');
-      const store = transaction.objectStore(STORE_NAME);
-      const request = store.add(newDoc);
+  async deleteDocument(id: string): Promise<boolean> {
+    const { error } = await supabase
+      .from('mcu_documents')
+      .delete()
+      .eq('id', id);
 
-      request.onsuccess = () => resolve(newDoc);
-      request.onerror = () => reject(request.error);
-    });
+    if (error) {
+      console.error('Gagal menghapus dokumen:', error);
+      return false;
+    }
+
+    return true;
   }
-
-  async getDocumentsByCategory(category: DocumentCategory): Promise<MCUDocument[]> {
-    const db = await this.getDB();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(STORE_NAME, 'readonly');
-      const store = transaction.objectStore(STORE_NAME);
-      const index = store.index('category');
-      const request = index.getAll(category);
-
-      request.onsuccess = () => resolve(request.result || []);
-      request.onerror = () => reject(request.error);
-    });
-  }
-
-  async getDocumentsByPatientAndCategory(
-    patientId: string,
-    category: DocumentCategory
-  ): Promise<MCUDocument[]> {
-    const db = await this.getDB();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(STORE_NAME, 'readonly');
-      const store = transaction.objectStore(STORE_NAME);
-      const index = store.index('patientCategory');
-      const request = index.getAll([patientId, category]);
-
-      request.onsuccess = () => resolve(request.result || []);
-      request.onerror = () => reject(request.error);
-    });
-  }
-
-  async deleteDocument(id: string): Promise<void> {
-    const db = await this.getDB();
-    return new Promise((resolve, reject) => {
-      const transaction = db.transaction(STORE_NAME, 'readwrite');
-      const store = transaction.objectStore(STORE_NAME);
-      const request = store.delete(id);
-
-      request.onsuccess = () => resolve();
-      request.onerror = () => reject(request.error);
-    });
-  }
-}
-
-export const documentStorageService = new DocumentStorageService();
+};
