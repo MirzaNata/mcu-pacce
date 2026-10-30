@@ -2,85 +2,93 @@ import { supabase } from '../lib/supabaseClient';
 import type { LabResult } from '../types';
 
 export const labService = {
+  // Fungsi yang sudah ada sebelumnya
   async getLabResultsByPatientId(patientId: string): Promise<LabResult[]> {
     const { data, error } = await supabase
       .from('lab_results')
       .select('*')
-      .eq('patient_id', patientId)
-      .order('created_at', { ascending: false });
+      .eq('patient_id', patientId);
 
     if (error) {
-      console.error('Gagal mengambil data laboratorium:', error);
+      console.error('Gagal mengambil data lab:', error);
       return [];
     }
-
-    return (data || []).map((r: any) => ({
-      id: r.id,
-      patientId: r.patient_id,
-      testName: r.test_name,
-      result: r.result,
-      unit: r.unit,
-      referenceRange: r.reference_range,
-      status: r.status,
-      notes: r.notes,
-      date: r.date || r.upload_date || r.created_at?.split('T')[0],
-      uploadDate: r.upload_date || r.created_at?.split('T')[0],
-      fileDataUrl: r.file_data_url || r.fileDataUrl || r.fileData || '',
-      fileData: r.file_data || r.fileData || '',
-    }));
+    return data || [];
   },
 
-  async saveLabResult(data: Omit<LabResult, 'id' | 'uploadDate'>): Promise<LabResult | null> {
-    const dataUrl = data.fileDataUrl || data.fileData || '';
-
-    const { data: inserted, error } = await supabase
+  async saveLabResult(data: Omit<LabResult, 'id' | 'uploadedAt'>): Promise<LabResult | null> {
+    const { data: result, error } = await supabase
       .from('lab_results')
-      .insert([{
-        patient_id: data.patientId,
-        test_name: data.testName,
-        result: data.result,
-        unit: data.unit,
-        reference_range: data.referenceRange,
-        status: data.status,
-        notes: data.notes,
-        date: data.date || new Date().toISOString().split('T')[0],
-        upload_date: new Date().toISOString().split('T')[0],
-        file_data_url: dataUrl,
-      }])
+      .insert([data])
       .select()
       .single();
 
-    if (error || !inserted) {
+    if (error) {
       console.error('Gagal menyimpan hasil lab:', error);
-      return null;
+      throw error;
     }
-
-    return {
-      id: inserted.id,
-      patientId: inserted.patient_id,
-      testName: inserted.test_name,
-      result: inserted.result,
-      unit: inserted.unit,
-      referenceRange: inserted.reference_range,
-      status: inserted.status,
-      notes: inserted.notes,
-      date: inserted.date,
-      uploadDate: inserted.upload_date,
-      fileDataUrl: inserted.file_data_url,
-    };
+    return result;
   },
 
-  async deleteLabResult(id: string): Promise<boolean> {
-    const { error } = await supabase
-      .from('lab_results')
-      .delete()
-      .eq('id', id);
+  // 1. Ambil URL Publik Dokumen PDF Hasil Lab
+  async getLabDocumentUrl(patientId: string): Promise<string | null> {
+    try {
+      const { data, error } = await supabase.storage
+        .from('mcu-documents')
+        .list(`lab/${patientId}`);
 
-    if (error) {
-      console.error('Gagal menghapus data lab:', error);
-      return false;
+      if (error || !data || data.length === 0) return null;
+
+      // Ambil berkas terbaru jika ada beberapa berkas
+      const latestFile = data[data.length - 1];
+      const { data: publicUrlData } = supabase.storage
+        .from('mcu-documents')
+        .getPublicUrl(`lab/${patientId}/${latestFile.name}`);
+
+      return publicUrlData.publicUrl;
+    } catch (err) {
+      console.error('Gagal mengambil URL dokumen lab:', err);
+      return null;
+    }
+  },
+
+  // 2. Unggah Berkas PDF Hasil Lab ke Supabase Storage
+  async uploadLabDocument(patientId: string, file: File): Promise<string> {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `lab_${Date.now()}.${fileExt}`;
+    const filePath = `lab/${patientId}/${fileName}`;
+
+    // Hapus berkas lama jika ada sebelum mengunggah yang baru
+    await this.deleteLabDocument(patientId);
+
+    const { error: uploadError } = await supabase.storage
+      .from('mcu-documents')
+      .upload(filePath, file, { upsert: true });
+
+    if (uploadError) {
+      throw uploadError;
     }
 
-    return true;
-  }
+    const { data } = supabase.storage
+      .from('mcu-documents')
+      .getPublicUrl(filePath);
+
+    return data.publicUrl;
+  },
+
+  // 3. Hapus Berkas PDF Hasil Lab dari Supabase Storage
+  async deleteLabDocument(patientId: string): Promise<void> {
+    try {
+      const { data: listData } = await supabase.storage
+        .from('mcu-documents')
+        .list(`lab/${patientId}`);
+
+      if (listData && listData.length > 0) {
+        const filesToDelete = listData.map((f) => `lab/${patientId}/${f.name}`);
+        await supabase.storage.from('mcu-documents').remove(filesToDelete);
+      }
+    } catch (err) {
+      console.error('Gagal menghapus dokumen lab:', err);
+    }
+  },
 };
