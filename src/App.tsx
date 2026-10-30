@@ -60,8 +60,8 @@ export function App() {
             </ProtectedLayout>
           }
         />
-        
-        {/* Rute Utama Pemeriksaan MCU */}
+
+        {/* Rute Pemeriksaan MCU */}
         <Route
           path="/mcu-examination/:id"
           element={
@@ -70,8 +70,8 @@ export function App() {
             </ProtectedLayout>
           }
         />
-        
-        {/* Alias Rute untuk Kompatibilitas */}
+
+        {/* Alias Rute Kompatibilitas */}
         <Route
           path="/examination/:id"
           element={
