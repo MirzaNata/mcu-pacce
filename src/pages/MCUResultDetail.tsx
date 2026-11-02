@@ -722,7 +722,7 @@ export const MCUResultDetail = () => {
                 </table>
               </div>
 
-              {/* II. GAYA HIDUP & KEBIASAAN (REVISI HASIL MEROKOK & ALKOHOL) */}
+              {/* II. GAYA HIDUP & KEBIASAAN */}
               <div className="space-y-1.5">
                 <div className="font-bold text-xs bg-gray-100 p-1.5 border border-black uppercase flex justify-between">
                   <span>Riwayat Kebiasaan Hidup</span>
@@ -801,7 +801,7 @@ export const MCUResultDetail = () => {
                 </table>
               </div>
 
-              {/* IV. RIWAYAT VAKSINASI */}
+              {/* IV. RIWAYAT VAKSINASI (DIPERBARUI) */}
               <div className="space-y-1.5">
                 <div className="font-bold text-xs bg-gray-100 p-1.5 border border-black uppercase flex justify-between">
                   <span>Riwayat Vaksinasi</span>
@@ -811,9 +811,16 @@ export const MCUResultDetail = () => {
                   {VACCINATION_ITEMS.map((item) => {
                     const data = mcuData.vaccinationHistory?.[item.id] || {};
                     return (
-                      <div key={item.id} className="p-1 border-b border-gray-200 flex justify-between">
-                        <span className="font-semibold">{item.label}:</span>
-                        <span>[{data.status === 'Ya' ? '☑' : '☐'}] Ya</span>
+                      <div key={item.id} className="p-1 border-b border-gray-200">
+                        <div className="flex justify-between items-center">
+                          <span className="font-semibold">{item.label}:</span>
+                          <span>[{data.status === 'Ya' ? '☑' : '☐'}] Ya</span>
+                        </div>
+                        {data.status === 'Ya' && data.date && (
+                          <div className="text-[10px] text-gray-600 font-medium text-right mt-0.5">
+                            Tgl: {data.date}
+                          </div>
+                        )}
                       </div>
                     );
                   })}
