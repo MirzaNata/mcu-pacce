@@ -593,7 +593,7 @@ export const MCUResultDetail = () => {
         </div>
       </div>
 
-      {/* MODAL PREVIEW PDF & CETAK LAPORAN BILINGUAL LENGKAP STANDAR PERUSAHAAN */}
+      {/* MODAL PREVIEW PDF & CETAK LAPORAN BILINGUAL LENGKAP DENGAN LOGO */}
       {showPreview && (
         <div className="fixed inset-0 z-50 bg-black/70 flex items-start justify-center p-4 overflow-y-auto print:p-0 print:bg-white print:static">
           <div className="bg-white rounded-2xl max-w-4xl w-full my-6 p-8 shadow-2xl relative space-y-6 print:m-0 print:p-0 print:shadow-none print:w-full text-black">
@@ -622,15 +622,23 @@ export const MCUResultDetail = () => {
             {/* DOKUMEN CETAK A4 PROPOSIONAL */}
             <div className="space-y-5 text-xs font-sans text-gray-900 print:text-black">
               
-              {/* KOP SURAT BILINGUAL */}
+              {/* KOP SURAT BILINGUAL DENGAN LOGO */}
               <div className="border-b-2 border-black pb-2 flex justify-between items-end">
-                <div>
-                  <h1 className="text-lg font-black text-black uppercase tracking-tight">
-                    Klinik Pakisaji Cardiovascular Center
-                  </h1>
-                  <p className="text-xs text-gray-700 font-medium mt-0.5">
-                    Jl. Pakisaji No. 1, Pakisaji, Kab. Malang, Jawa Timur
-                  </p>
+                <div className="flex items-center gap-3">
+                  <img 
+                    src="/logo.png" 
+                    alt="Logo Klinik" 
+                    className="h-12 w-auto object-contain shrink-0" 
+                    onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
+                  />
+                  <div>
+                    <h1 className="text-lg font-black text-black uppercase tracking-tight">
+                      Klinik Pakisaji Cardiovascular Center
+                    </h1>
+                    <p className="text-xs text-gray-700 font-medium italic mt-0.5">
+                      Jl. Pakisaji No.1, Pakisaji, Kab.Malang
+                    </p>
+                  </div>
                 </div>
                 <div className="text-right">
                   <h2 className="text-sm font-bold text-black uppercase">Laporan Pemeriksaan Kesehatan</h2>
