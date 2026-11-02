@@ -593,15 +593,15 @@ export const MCUResultDetail = () => {
         </div>
       </div>
 
-      {/* MODAL PREVIEW PDF & CETAK LAPORAN BILINGUAL LENGKAP */}
+      {/* MODAL PREVIEW PDF & CETAK LAPORAN BILINGUAL LENGKAP STANDAR PERUSAHAAN */}
       {showPreview && (
         <div className="fixed inset-0 z-50 bg-black/70 flex items-start justify-center p-4 overflow-y-auto print:p-0 print:bg-white print:static">
-          <div className="bg-white rounded-2xl max-w-4xl w-full my-6 p-8 shadow-2xl relative space-y-5 print:m-0 print:p-0 print:shadow-none print:w-full text-black">
+          <div className="bg-white rounded-2xl max-w-4xl w-full my-6 p-8 shadow-2xl relative space-y-6 print:m-0 print:p-0 print:shadow-none print:w-full text-black">
             
             <div className="flex items-center justify-between border-b pb-4 print:hidden">
               <div className="flex items-center gap-2">
                 <Printer className="w-5 h-5 text-blue-600" />
-                <h2 className="text-base font-bold text-gray-900">Preview Laporan MCU Resmi (Presisi PDF)</h2>
+                <h2 className="text-base font-bold text-gray-900">Preview Laporan MCU Resmi (Standar Perusahaan)</h2>
               </div>
               <div className="flex items-center gap-3">
                 <button
@@ -619,94 +619,94 @@ export const MCUResultDetail = () => {
               </div>
             </div>
 
-            {/* HALAMAN DOKUMEN CETAK A4 */}
-            <div className="space-y-4 text-xs font-sans text-gray-900 print:text-black">
+            {/* DOKUMEN CETAK A4 PROPOSIONAL */}
+            <div className="space-y-5 text-xs font-sans text-gray-900 print:text-black">
               
               {/* KOP SURAT BILINGUAL */}
               <div className="border-b-2 border-black pb-2 flex justify-between items-end">
                 <div>
-                  <h1 className="text-base font-black text-black uppercase tracking-tight">
+                  <h1 className="text-lg font-black text-black uppercase tracking-tight">
                     Klinik Pakisaji Cardiovascular Center
                   </h1>
-                  <p className="text-[10px] text-gray-700 font-medium">
+                  <p className="text-xs text-gray-700 font-medium mt-0.5">
                     Jl. Pakisaji No. 1, Pakisaji, Kab. Malang, Jawa Timur
                   </p>
                 </div>
                 <div className="text-right">
-                  <h2 className="text-xs font-bold text-black uppercase">Laporan Pemeriksaan Kesehatan</h2>
-                  <p className="text-[10px] text-gray-600 italic">Medical Check Up Record</p>
+                  <h2 className="text-sm font-bold text-black uppercase">Laporan Pemeriksaan Kesehatan</h2>
+                  <p className="text-xs text-gray-600 italic">Medical Check Up Record</p>
                 </div>
               </div>
 
               {/* I. DATA PRIBADI */}
-              <div className="space-y-1">
-                <div className="font-bold text-[10px] bg-gray-100 p-1 border border-black uppercase flex justify-between">
+              <div className="space-y-1.5">
+                <div className="font-bold text-xs bg-gray-100 p-1.5 border border-black uppercase flex justify-between">
                   <span>Data Pribadi (Sesuai KTP / Passport)</span>
                   <span className="italic font-normal lowercase text-gray-600">Personal Data (as in NID/Passport)</span>
                 </div>
-                <table className="w-full border-collapse border border-black text-[10px]">
+                <table className="w-full border-collapse border border-black text-xs">
                   <tbody>
                     <tr className="border-b border-black">
-                      <td className="p-1 font-bold w-1/5 bg-gray-50 border-r border-black">
-                        Tanggal Registrasi<br/><span className="text-[9px] font-normal italic text-gray-500">Registration Date</span>
+                      <td className="p-2 font-bold w-1/5 bg-gray-50 border-r border-black">
+                        Tanggal Registrasi<br/><span className="text-[10px] font-normal italic text-gray-500">Registration Date</span>
                       </td>
-                      <td className="p-1 w-3/10 border-r border-black font-semibold">
+                      <td className="p-2 w-3/10 border-r border-black font-semibold">
                         : {patient.registrationDate || '08-10-2026'}
                       </td>
-                      <td className="p-1 font-bold w-1/5 bg-gray-50 border-r border-black">
-                        Gol. Darah (Rhesus)<br/><span className="text-[9px] font-normal italic text-gray-500">Blood Type</span>
+                      <td className="p-2 font-bold w-1/5 bg-gray-50 border-r border-black">
+                        Gol. Darah (Rhesus)<br/><span className="text-[10px] font-normal italic text-gray-500">Blood Type</span>
                       </td>
-                      <td className="p-1 w-3/10 font-semibold">
+                      <td className="p-2 w-3/10 font-semibold">
                         : {patient.bloodType || '-'}
                       </td>
                     </tr>
                     <tr className="border-b border-black">
-                      <td className="p-1 font-bold bg-gray-50 border-r border-black">
-                        Nama Lengkap<br/><span className="text-[9px] font-normal italic text-gray-500">Full Name</span>
+                      <td className="p-2 font-bold bg-gray-50 border-r border-black">
+                        Nama Lengkap<br/><span className="text-[10px] font-normal italic text-gray-500">Full Name</span>
                       </td>
-                      <td className="p-1 border-r border-black font-bold text-black">
+                      <td className="p-2 border-r border-black font-bold text-black">
                         : {patient.fullName}
                       </td>
-                      <td className="p-1 font-bold bg-gray-50 border-r border-black">
-                        Nomor Identitas<br/><span className="text-[9px] font-normal italic text-gray-500">Identity Number</span>
+                      <td className="p-2 font-bold bg-gray-50 border-r border-black">
+                        Nomor Identitas<br/><span className="text-[10px] font-normal italic text-gray-500">Identity Number</span>
                       </td>
-                      <td className="p-1 font-mono font-bold">
+                      <td className="p-2 font-mono font-bold">
                         : {patient.nik || patient.identityNumber || '-'}
                       </td>
                     </tr>
                     <tr className="border-b border-black">
-                      <td className="p-1 font-bold bg-gray-50 border-r border-black">
-                        Tanggal Lahir / Usia<br/><span className="text-[9px] font-normal italic text-gray-500">Date of Birth / Age</span>
+                      <td className="p-2 font-bold bg-gray-50 border-r border-black">
+                        Tanggal Lahir / Usia<br/><span className="text-[10px] font-normal italic text-gray-500">Date of Birth / Age</span>
                       </td>
-                      <td className="p-1 border-r border-black">
+                      <td className="p-2 border-r border-black">
                         : {patient.dateOfBirth || '-'} ({patient.age || '-'} Thn)
                       </td>
-                      <td className="p-1 font-bold bg-gray-50 border-r border-black">
-                        Jenis Kelamin<br/><span className="text-[9px] font-normal italic text-gray-500">Sex</span>
+                      <td className="p-2 font-bold bg-gray-50 border-r border-black">
+                        Jenis Kelamin<br/><span className="text-[10px] font-normal italic text-gray-500">Sex</span>
                       </td>
-                      <td className="p-1 font-semibold">
+                      <td className="p-2 font-semibold">
                         : [{patient.gender === 'Laki-Laki' || pAny.gender === 'L' ? '☑' : '☐'}] Laki-laki &nbsp; [{patient.gender === 'Perempuan' || pAny.gender === 'P' ? '☑' : '☐'}] Perempuan
                       </td>
                     </tr>
                     <tr className="border-b border-black">
-                      <td className="p-1 font-bold bg-gray-50 border-r border-black">
-                        Perusahaan / Status<br/><span className="text-[9px] font-normal italic text-gray-500">Company / Status</span>
+                      <td className="p-2 font-bold bg-gray-50 border-r border-black">
+                        Perusahaan / Status<br/><span className="text-[10px] font-normal italic text-gray-500">Company / Status</span>
                       </td>
-                      <td className="p-1 border-r border-black font-semibold">
+                      <td className="p-2 border-r border-black font-semibold">
                         : {patient.company || patient.companyName || '-'}
                       </td>
-                      <td className="p-1 font-bold bg-gray-50 border-r border-black">
-                        No. Telp.<br/><span className="text-[9px] font-normal italic text-gray-500">Phone Number</span>
+                      <td className="p-2 font-bold bg-gray-50 border-r border-black">
+                        No. Telp.<br/><span className="text-[10px] font-normal italic text-gray-500">Phone Number</span>
                       </td>
-                      <td className="p-1">
+                      <td className="p-2">
                         : {patient.phone || '-'}
                       </td>
                     </tr>
                     <tr>
-                      <td className="p-1 font-bold bg-gray-50 border-r border-black">
-                        Alamat<br/><span className="text-[9px] font-normal italic text-gray-500">Address</span>
+                      <td className="p-2 font-bold bg-gray-50 border-r border-black">
+                        Alamat<br/><span className="text-[10px] font-normal italic text-gray-500">Address</span>
                       </td>
-                      <td colSpan={3} className="p-1">
+                      <td colSpan={3} className="p-2">
                         : {patient.address || '-'}
                       </td>
                     </tr>
@@ -715,49 +715,49 @@ export const MCUResultDetail = () => {
               </div>
 
               {/* II. GAYA HIDUP & KEBIASAAN */}
-              <div className="space-y-1">
-                <div className="font-bold text-[10px] bg-gray-100 p-1 border border-black uppercase flex justify-between">
+              <div className="space-y-1.5">
+                <div className="font-bold text-xs bg-gray-100 p-1.5 border border-black uppercase flex justify-between">
                   <span>Riwayat Kebiasaan Hidup</span>
                   <span className="italic font-normal lowercase text-gray-600">Personal Habits</span>
                 </div>
-                <table className="w-full border-collapse border border-black text-[10px]">
+                <table className="w-full border-collapse border border-black text-xs">
                   <tbody>
                     <tr className="border-b border-black">
-                      <td className="p-1 font-bold w-1/6 bg-gray-50 border-r border-black">Merokok / Smoking</td>
-                      <td className="p-1 w-1/3 border-r border-black">
+                      <td className="p-2 font-bold w-1/6 bg-gray-50 border-r border-black">Merokok / Smoking</td>
+                      <td className="p-2 w-1/3 border-r border-black">
                         [{mcuData.lifestyle?.smoking?.status === 'Ya' ? '☑' : '☐'}] Ya &nbsp; 
                         [{mcuData.lifestyle?.smoking?.status === 'Tidak' ? '☑' : '☐'}] Tidak 
                         {mcuData.lifestyle?.smoking?.status === 'Ya' && ` (${mcuData.lifestyle.smoking.cigarettesPerDay || 0} btg/hr)`}
                       </td>
-                      <td className="p-1 font-bold w-1/6 bg-gray-50 border-r border-black">Alkohol / Alcohol</td>
-                      <td className="p-1">
+                      <td className="p-2 font-bold w-1/6 bg-gray-50 border-r border-black">Alkohol / Alcohol</td>
+                      <td className="p-2">
                         [{mcuData.lifestyle?.alcohol?.status === 'Ya' ? '☑' : '☐'}] Ya &nbsp; 
                         [{mcuData.lifestyle?.alcohol?.status === 'Tidak' ? '☑' : '☐'}] Tidak
                       </td>
                     </tr>
                     <tr>
-                      <td className="p-1 font-bold bg-gray-50 border-r border-black">BAB / Bowel</td>
-                      <td className="p-1 border-r border-black">: {mcuData.lifestyle?.bowel?.status || 'Normal'}</td>
-                      <td className="p-1 font-bold bg-gray-50 border-r border-black">BAK / Bladder</td>
-                      <td className="p-1">: {mcuData.lifestyle?.bladder?.status || 'Normal'}</td>
+                      <td className="p-2 font-bold bg-gray-50 border-r border-black">BAB / Bowel</td>
+                      <td className="p-2 border-r border-black">: {mcuData.lifestyle?.bowel?.status || 'Normal'}</td>
+                      <td className="p-2 font-bold bg-gray-50 border-r border-black">BAK / Bladder</td>
+                      <td className="p-2">: {mcuData.lifestyle?.bladder?.status || 'Normal'}</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
 
               {/* III. RIWAYAT KESEHATAN PRIBADI & KELUARGA */}
-              <div className="space-y-1">
-                <div className="font-bold text-[10px] bg-gray-100 p-1 border border-black uppercase flex justify-between">
+              <div className="space-y-1.5">
+                <div className="font-bold text-xs bg-gray-100 p-1.5 border border-black uppercase flex justify-between">
                   <span>Riwayat Kesehatan Pribadi dan Keluarga</span>
                   <span className="italic font-normal lowercase text-gray-600">Personal and Family Medical History</span>
                 </div>
-                <table className="w-full border-collapse border border-black text-[9px]">
+                <table className="w-full border-collapse border border-black text-[11px]">
                   <thead>
                     <tr className="bg-gray-100 font-bold border-b border-black text-center">
-                      <th className="p-1 text-left w-1/2 border-r border-black">Kelainan Medis / Medical Problem</th>
-                      <th className="p-1 w-1/8 border-r border-black">Pribadi / Personal</th>
-                      <th className="p-1 w-1/8 border-r border-black">Keluarga / Family</th>
-                      <th className="p-1 text-left">Keterangan / Details</th>
+                      <th className="p-1.5 text-left w-1/2 border-r border-black">Kelainan Medis / Medical Problem</th>
+                      <th className="p-1.5 w-1/8 border-r border-black">Pribadi / Personal</th>
+                      <th className="p-1.5 w-1/8 border-r border-black">Keluarga / Family</th>
+                      <th className="p-1.5 text-left">Keterangan / Details</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -765,10 +765,10 @@ export const MCUResultDetail = () => {
                       const data = mcuData.medicalHistory?.[item.id] || {};
                       return (
                         <tr key={item.id} className="border-b border-gray-300">
-                          <td className="p-1 font-medium border-r border-black">{item.label}</td>
-                          <td className="p-1 text-center border-r border-black">{data.personalHistory || 'Tidak'}</td>
-                          <td className="p-1 text-center border-r border-black">{data.familyHistory || 'Tidak'}</td>
-                          <td className="p-1">{data.description || '-'}</td>
+                          <td className="p-1.5 font-medium border-r border-black">{item.label}</td>
+                          <td className="p-1.5 text-center border-r border-black">{data.personalHistory || 'Tidak'}</td>
+                          <td className="p-1.5 text-center border-r border-black">{data.familyHistory || 'Tidak'}</td>
+                          <td className="p-1.5">{data.description || '-'}</td>
                         </tr>
                       );
                     })}
@@ -777,16 +777,16 @@ export const MCUResultDetail = () => {
               </div>
 
               {/* IV. RIWAYAT VAKSINASI */}
-              <div className="space-y-1">
-                <div className="font-bold text-[10px] bg-gray-100 p-1 border border-black uppercase flex justify-between">
+              <div className="space-y-1.5">
+                <div className="font-bold text-xs bg-gray-100 p-1.5 border border-black uppercase flex justify-between">
                   <span>Riwayat Vaksinasi</span>
                   <span className="italic font-normal lowercase text-gray-600">Vaccination History</span>
                 </div>
-                <div className="grid grid-cols-4 gap-1 text-[9px] border border-black p-1">
+                <div className="grid grid-cols-4 gap-2 text-[11px] border border-black p-2">
                   {VACCINATION_ITEMS.map((item) => {
                     const data = mcuData.vaccinationHistory?.[item.id] || {};
                     return (
-                      <div key={item.id} className="p-0.5 border-b border-gray-200 flex justify-between">
+                      <div key={item.id} className="p-1 border-b border-gray-200 flex justify-between">
                         <span className="font-semibold">{item.label}:</span>
                         <span>[{data.status === 'Ya' ? '☑' : '☐'}] Ya</span>
                       </div>
@@ -796,17 +796,17 @@ export const MCUResultDetail = () => {
               </div>
 
               {/* V. ANAMNESIS KELUHAN */}
-              <div className="space-y-1">
-                <div className="font-bold text-[10px] bg-gray-100 p-1 border border-black uppercase flex justify-between">
+              <div className="space-y-1.5">
+                <div className="font-bold text-xs bg-gray-100 p-1.5 border border-black uppercase flex justify-between">
                   <span>Anamnesis (Keluhan Saat Pemeriksaan)</span>
                   <span className="italic font-normal lowercase text-gray-600">Any Complaints During Examination</span>
                 </div>
-                <div className="border border-black p-1.5 text-[9px]">
-                  <div className="grid grid-cols-3 gap-1">
+                <div className="border border-black p-2 text-[11px]">
+                  <div className="grid grid-cols-3 gap-1.5">
                     {Object.entries(ANAMNESIS_COMPLAINTS_MAP).map(([key, label]) => {
                       const isChecked = (mcuData.anamnesis?.complaints || []).includes(key);
                       return (
-                        <div key={key} className="flex items-center gap-1">
+                        <div key={key} className="flex items-center gap-1.5">
                           <span>[{isChecked ? '☑' : '☐'}]</span>
                           <span className={isChecked ? 'font-bold text-black' : 'text-gray-700'}>{label}</span>
                         </div>
@@ -814,7 +814,7 @@ export const MCUResultDetail = () => {
                     })}
                   </div>
                   {mcuData.anamnesis?.otherComplaintText && (
-                    <div className="mt-1 pt-1 border-t border-gray-300">
+                    <div className="mt-2 pt-1.5 border-t border-gray-300">
                       <span className="font-bold">Keluhan Lainnya: </span>{mcuData.anamnesis.otherComplaintText}
                     </div>
                   )}
@@ -822,55 +822,55 @@ export const MCUResultDetail = () => {
               </div>
 
               {/* VI. PEMERIKSAAN UMUM & TANDA VITAL */}
-              <div className="space-y-1">
-                <div className="font-bold text-[10px] bg-gray-100 p-1 border border-black uppercase flex justify-between">
+              <div className="space-y-1.5">
+                <div className="font-bold text-xs bg-gray-100 p-1.5 border border-black uppercase flex justify-between">
                   <span>Pemeriksaan Umum</span>
                   <span className="italic font-normal lowercase text-gray-600">General Examination</span>
                 </div>
-                <table className="w-full border-collapse border border-black text-[10px]">
+                <table className="w-full border-collapse border border-black text-xs">
                   <tbody>
                     <tr className="border-b border-black">
-                      <td className="p-1 font-bold bg-gray-50 border-r border-black w-1/6">Tekanan Darah</td>
-                      <td className="p-1 border-r border-black w-1/3">
+                      <td className="p-2 font-bold bg-gray-50 border-r border-black w-1/6">Tekanan Darah</td>
+                      <td className="p-2 border-r border-black w-1/3">
                         : {gen.systolic && gen.diastolic ? `${gen.systolic}/${gen.diastolic} mmHg` : '-'}
                       </td>
-                      <td className="p-1 font-bold bg-gray-50 border-r border-black w-1/6">Nadi / Pulse Rate</td>
-                      <td className="p-1">: {gen.pulse || gen.pulseRate || '-'} x/mnt</td>
+                      <td className="p-2 font-bold bg-gray-50 border-r border-black w-1/6">Nadi / Pulse Rate</td>
+                      <td className="p-2">: {gen.pulse || gen.pulseRate || '-'} x/mnt</td>
                     </tr>
                     <tr className="border-b border-black">
-                      <td className="p-1 font-bold bg-gray-50 border-r border-black">Laju Napas / RR</td>
-                      <td className="p-1 border-r border-black">: {gen.respiratoryRate || '-'} x/mnt</td>
-                      <td className="p-1 font-bold bg-gray-50 border-r border-black">Suhu / Temp</td>
-                      <td className="p-1">: {gen.temperature || '-'} °C</td>
+                      <td className="p-2 font-bold bg-gray-50 border-r border-black">Laju Napas / RR</td>
+                      <td className="p-2 border-r border-black">: {gen.respiratoryRate || '-'} x/mnt</td>
+                      <td className="p-2 font-bold bg-gray-50 border-r border-black">Suhu / Temp</td>
+                      <td className="p-2">: {gen.temperature || '-'} °C</td>
                     </tr>
                     <tr className="border-b border-black">
-                      <td className="p-1 font-bold bg-gray-50 border-r border-black">Tinggi / Berat</td>
-                      <td className="p-1 border-r border-black">: {gen.height || '-'} cm / {gen.weight || '-'} kg</td>
-                      <td className="p-1 font-bold bg-gray-50 border-r border-black">Saturasi O2</td>
-                      <td className="p-1">: {gen.oxygenSaturation || '-'} %</td>
+                      <td className="p-2 font-bold bg-gray-50 border-r border-black">Tinggi / Berat</td>
+                      <td className="p-2 border-r border-black">: {gen.height || '-'} cm / {gen.weight || '-'} kg</td>
+                      <td className="p-2 font-bold bg-gray-50 border-r border-black">Saturasi O2</td>
+                      <td className="p-2">: {gen.oxygenSaturation || '-'} %</td>
                     </tr>
                     <tr>
-                      <td className="p-1 font-bold bg-gray-50 border-r border-black">BMI / Index Body</td>
-                      <td className="p-1 border-r border-black font-bold">: {gen.bmi || '-'} {gen.bmiCategory ? `(${gen.bmiCategory})` : ''}</td>
-                      <td className="p-1 font-bold bg-gray-50 border-r border-black">Tes Buta Warna</td>
-                      <td className="p-1">: {mcuData.visionExamination?.colorBlindness || 'Normal'}</td>
+                      <td className="p-2 font-bold bg-gray-50 border-r border-black">BMI / Index Body</td>
+                      <td className="p-2 border-r border-black font-bold">: {gen.bmi || '-'} {gen.bmiCategory ? `(${gen.bmiCategory})` : ''}</td>
+                      <td className="p-2 font-bold bg-gray-50 border-r border-black">Tes Buta Warna</td>
+                      <td className="p-2">: {mcuData.visionExamination?.colorBlindness || 'Normal'}</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
 
               {/* VII. PEMERIKSAAN FISIK ORGAN */}
-              <div className="space-y-1">
-                <div className="font-bold text-[10px] bg-gray-100 p-1 border border-black uppercase flex justify-between">
+              <div className="space-y-1.5">
+                <div className="font-bold text-xs bg-gray-100 p-1.5 border border-black uppercase flex justify-between">
                   <span>Pemeriksaan Fisik</span>
                   <span className="italic font-normal lowercase text-gray-600">General Physical Examination</span>
                 </div>
-                <table className="w-full border-collapse border border-black text-[9px]">
+                <table className="w-full border-collapse border border-black text-[11px]">
                   <thead>
                     <tr className="bg-gray-100 font-bold border-b border-black">
-                      <th className="p-1 text-left w-1/3 border-r border-black">Organ / Body Part</th>
-                      <th className="p-1 text-center w-1/4 border-r border-black">Hasil / Result</th>
-                      <th className="p-1 text-left">Keterangan / Notes</th>
+                      <th className="p-1.5 text-left w-1/3 border-r border-black">Organ / Body Part</th>
+                      <th className="p-1.5 text-center w-1/4 border-r border-black">Hasil / Result</th>
+                      <th className="p-1.5 text-left">Keterangan / Notes</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -878,9 +878,9 @@ export const MCUResultDetail = () => {
                       const data = (mcuData.physicalExamination?.bodyParts?.[item.id] || {}) as { status?: string; notes?: string };
                       return (
                         <tr key={item.id} className="border-b border-gray-300">
-                          <td className="p-1 font-medium border-r border-black">{item.label}</td>
-                          <td className="p-1 text-center font-bold border-r border-black">{data.status || 'Normal'}</td>
-                          <td className="p-1">{data.notes || '-'}</td>
+                          <td className="p-1.5 font-medium border-r border-black">{item.label}</td>
+                          <td className="p-1.5 text-center font-bold border-r border-black">{data.status || 'Normal'}</td>
+                          <td className="p-1.5">{data.notes || '-'}</td>
                         </tr>
                       );
                     })}
@@ -889,17 +889,17 @@ export const MCUResultDetail = () => {
               </div>
 
               {/* VIII. PEMERIKSAAN PENUNJANG */}
-              <div className="space-y-1">
-                <div className="font-bold text-[10px] bg-gray-100 p-1 border border-black uppercase flex justify-between">
+              <div className="space-y-1.5">
+                <div className="font-bold text-xs bg-gray-100 p-1.5 border border-black uppercase flex justify-between">
                   <span>Pemeriksaan Penunjang</span>
                   <span className="italic font-normal lowercase text-gray-600">Other Tests Findings</span>
                 </div>
-                <table className="w-full border-collapse border border-black text-[9px]">
+                <table className="w-full border-collapse border border-black text-[11px]">
                   <thead>
                     <tr className="bg-gray-100 font-bold border-b border-black">
-                      <th className="p-1 text-left w-1/3 border-r border-black">Pemeriksaan / Test</th>
-                      <th className="p-1 text-center w-1/4 border-r border-black">Hasil / Result</th>
-                      <th className="p-1 text-left">Keterangan / Details</th>
+                      <th className="p-1.5 text-left w-1/3 border-r border-black">Pemeriksaan / Test</th>
+                      <th className="p-1.5 text-center w-1/4 border-r border-black">Hasil / Result</th>
+                      <th className="p-1.5 text-left">Keterangan / Details</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -907,17 +907,17 @@ export const MCUResultDetail = () => {
                       const data = (mcuData.supportingExamination?.mainExams?.[item.id] || {}) as { status?: string; notes?: string };
                       return (
                         <tr key={item.id} className="border-b border-gray-300">
-                          <td className="p-1 font-medium border-r border-black">{item.label}</td>
-                          <td className="p-1 text-center font-bold border-r border-black">{data.status || 'Normal'}</td>
-                          <td className="p-1">{data.notes || '-'}</td>
+                          <td className="p-1.5 font-medium border-r border-black">{item.label}</td>
+                          <td className="p-1.5 text-center font-bold border-r border-black">{data.status || 'Normal'}</td>
+                          <td className="p-1.5">{data.notes || '-'}</td>
                         </tr>
                       );
                     })}
                     {(mcuData.supportingExamination?.additionalExams || []).map((exam) => (
                       <tr key={exam.id} className="border-b border-gray-300">
-                        <td className="p-1 font-medium border-r border-black">{exam.name}</td>
-                        <td className="p-1 text-center font-bold border-r border-black">{exam.status || 'Normal'}</td>
-                        <td className="p-1">{exam.notes || '-'}</td>
+                        <td className="p-1.5 font-medium border-r border-black">{exam.name}</td>
+                        <td className="p-1.5 text-center font-bold border-r border-black">{exam.status || 'Normal'}</td>
+                        <td className="p-1.5">{exam.notes || '-'}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -925,41 +925,41 @@ export const MCUResultDetail = () => {
               </div>
 
               {/* IX. KESIMPULAN, SARAN, DOKTER & TANDA TANGAN */}
-              <div className="pt-2 border-t-2 border-black space-y-2 print:break-inside-avoid">
-                <div className="font-bold text-[10px] bg-gray-100 p-1 border border-black uppercase flex justify-between">
+              <div className="pt-3 border-t-2 border-black space-y-2.5 print:break-inside-avoid">
+                <div className="font-bold text-xs bg-gray-100 p-1.5 border border-black uppercase flex justify-between">
                   <span>Kesimpulan & Saran</span>
                   <span className="italic font-normal lowercase text-gray-600">Resume & Advice</span>
                 </div>
 
-                <div className="border border-black p-2 space-y-1.5 text-[10px]">
+                <div className="border border-black p-3 space-y-2 text-xs">
                   <p className="italic text-gray-700">
                     Dengan ini saya menyatakan telah melakukan pemeriksaan terhadap pasien dan mencatat penemuan klinis seperti di atas.<br/>
-                    <span className="text-[9px] text-gray-500">I certify that I have examined the above-named person and my findings are as above.</span>
+                    <span className="text-[11px] text-gray-500">I certify that I have examined the above-named person and my findings are as above.</span>
                   </p>
-                  <p className="font-bold pt-1">
+                  <p className="font-bold pt-1 text-sm">
                     Kesimpulan Kelayakan Kerja: <span className="underline uppercase">{doc.conclusion || doc.finalResult || 'BELUM ADA KESIMPULAN'}</span>
                   </p>
-                  <p><span className="font-bold">Saran / Advice:</span> {doc.recommendation || 'Tidak ada saran khusus'}</p>
+                  <p className="text-xs"><span className="font-bold">Saran / Advice:</span> {doc.recommendation || 'Tidak ada saran khusus'}</p>
                 </div>
 
-                <div className="flex justify-between items-end pt-3">
-                  <div className="text-[9px] text-gray-500 italic max-w-sm">
-                    Dokumen hasil pemeriksaan kesehatan ini dicetak dan disahkan oleh Klinik Pakisaji Cardiovascular Center Malang.
+                <div className="flex justify-between items-end pt-4">
+                  <div className="text-[10px] text-gray-500 italic max-w-sm">
+                    Dokumen hasil pemeriksaan kesehatan ini dicetak dan disahkan secara resmi oleh Klinik Pakisaji Cardiovascular Center Malang.
                   </div>
-                  <div className="text-center w-56 space-y-0.5">
-                    <p className="text-[10px] font-bold">Malang, {doc.date || patient.registrationDate || '10 Oktober 2026'}</p>
-                    <p className="text-[9px] text-gray-600">Dokter Pemeriksa / Examining Physician,</p>
-                    <div className="h-14 flex items-center justify-center my-1">
+                  <div className="text-center w-60 space-y-1">
+                    <p className="text-xs font-bold">Malang, {doc.date || patient.registrationDate || '10 Oktober 2026'}</p>
+                    <p className="text-[11px] text-gray-600">Dokter Pemeriksa / Examining Physician,</p>
+                    <div className="h-16 flex items-center justify-center my-1">
                       {docAny.doctorSignature ? (
-                        <img src={String(docAny.doctorSignature)} alt="Tanda Tangan Dokter" className="max-h-14 object-contain" />
+                        <img src={String(docAny.doctorSignature)} alt="Tanda Tangan Dokter" className="max-h-16 object-contain" />
                       ) : (
-                        <div className="border border-dashed border-gray-300 w-full h-10 flex items-center justify-center text-[9px] text-gray-400">
+                        <div className="border border-dashed border-gray-300 w-full h-12 flex items-center justify-center text-[10px] text-gray-400">
                           [ Tanda Tangan Dokter ]
                         </div>
                       )}
                     </div>
-                    <p className="font-bold text-xs underline">{doc.doctorName || 'dr. Syifa Azzahra'}</p>
-                    <p className="text-[9px] text-gray-500">Dokter Umum / General Practitioner</p>
+                    <p className="font-bold text-sm underline">{doc.doctorName || 'dr. Syifa Azzahra'}</p>
+                    <p className="text-[10px] text-gray-500">Dokter Umum / General Practitioner</p>
                   </div>
                 </div>
               </div>
@@ -967,9 +967,9 @@ export const MCUResultDetail = () => {
               {/* HALAMAN LAMPIRAN 1: HASIL LABORATORIUM */}
               {labFileUrl && (
                 <div className="print:break-before-always pt-6 border-t-2 border-black space-y-3">
-                  <div className="font-bold text-[11px] bg-gray-200 p-1.5 border border-black uppercase flex items-center justify-between">
+                  <div className="font-bold text-xs bg-gray-200 p-2 border border-black uppercase flex items-center justify-between">
                     <span className="flex items-center gap-1.5"><FlaskConical className="w-4 h-4" /> Lampiran I: Hasil Pemeriksaan Laboratorium</span>
-                    <span className="text-[9px] text-gray-600 font-normal">Pasien: {patient.fullName} ({patient.mcuNumber})</span>
+                    <span className="text-[10px] text-gray-600 font-normal">Pasien: {patient.fullName} ({patient.mcuNumber})</span>
                   </div>
                   <div className="w-full border border-black overflow-hidden bg-gray-50 flex justify-center">
                     {labFileUrl.toLowerCase().endsWith('.pdf') ? (
@@ -988,9 +988,9 @@ export const MCUResultDetail = () => {
               {/* HALAMAN LAMPIRAN 2: HASIL RADIOLOGI / RONTGEN */}
               {radiologyFileUrl && (
                 <div className="print:break-before-always pt-6 border-t-2 border-black space-y-3">
-                  <div className="font-bold text-[11px] bg-gray-200 p-1.5 border border-black uppercase flex items-center justify-between">
+                  <div className="font-bold text-xs bg-gray-200 p-2 border border-black uppercase flex items-center justify-between">
                     <span className="flex items-center gap-1.5"><Scan className="w-4 h-4" /> Lampiran II: Hasil Pemeriksaan Radiologi / Rontgen</span>
-                    <span className="text-[9px] text-gray-600 font-normal">Pasien: {patient.fullName} ({patient.mcuNumber})</span>
+                    <span className="text-[10px] text-gray-600 font-normal">Pasien: {patient.fullName} ({patient.mcuNumber})</span>
                   </div>
                   <div className="w-full border border-black overflow-hidden bg-gray-50 flex justify-center">
                     {radiologyFileUrl.toLowerCase().endsWith('.pdf') ? (
@@ -1016,7 +1016,7 @@ export const MCUResultDetail = () => {
         @media print {
           @page {
             size: A4 portrait;
-            margin: 8mm;
+            margin: 10mm;
           }
           body {
             background-color: white !important;
