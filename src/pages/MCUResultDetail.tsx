@@ -192,9 +192,9 @@ export const MCUResultDetail = () => {
 
   const formatFinalResultText = (res?: string) => {
     if (!res) return 'BELUM DITENTUKAN DOKTER';
-    if (res === 'FIT') return 'FIT / LAIK KERJA';
-    if (res === 'FIT_DENGAN_CATATAN') return 'FIT DENGAN CATATAN / LAIK DENGAN CATATAN';
-    if (res === 'UNFIT') return 'UNFIT / TIDAK LAIK KERJA';
+    if (res === 'FIT') return 'FIT';
+    if (res === 'FIT_DENGAN_CATATAN') return 'FIT DENGAN CATATAN';
+    if (res === 'UNFIT') return 'UNFIT';
     return res;
   };
 
