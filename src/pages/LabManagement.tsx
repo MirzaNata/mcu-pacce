@@ -31,28 +31,34 @@ export const LabManagement = () => {
   }, []);
 
   const loadData = async () => {
-    try {
-      setLoading(true);
-      const patientList = await patientService.getPatients();
-      setPatients(patientList);
+  try {
+    setLoading(true);
+    const patientList = await patientService.getPatients();
+    setPatients(patientList);
 
-      // Ambil daftar file laboratorium untuk tiap peserta
-      const filesMap: Record<string, string> = {};
-      for (const p of patientList) {
-        if (p.id) {
-          const fileUrl = await labService.getLabDocumentUrl(p.id);
-          if (fileUrl) {
-            filesMap[p.id] = fileUrl;
-          }
-        }
+    // Eksekusi pengambilan berkas lab secara paralel
+    const filePromises = patientList.map(async (p) => {
+      if (!p.id) return null;
+      const fileUrl = await labService.getLabDocumentUrl(p.id);
+      return { id: p.id, fileUrl };
+    });
+
+    const fileResults = await Promise.all(filePromises);
+
+    const filesMap: Record<string, string> = {};
+    fileResults.forEach((item) => {
+      if (item && item.fileUrl) {
+        filesMap[item.id] = item.fileUrl;
       }
-      setLabFiles(filesMap);
-    } catch (err) {
-      console.error('Gagal memuat data laboratorium:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    });
+
+    setLabFiles(filesMap);
+  } catch (err) {
+    console.error('Gagal memuat data laboratorium:', err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleOpenUploadModal = (patient: Patient) => {
     setSelectedPatient(patient);

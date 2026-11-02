@@ -31,28 +31,34 @@ export const RadiologyManagement = () => {
   }, []);
 
   const loadData = async () => {
-    try {
-      setLoading(true);
-      const patientList = await patientService.getPatients();
-      setPatients(patientList);
+  try {
+    setLoading(true);
+    const patientList = await patientService.getPatients();
+    setPatients(patientList);
 
-      // Ambil daftar file radiologi untuk tiap peserta
-      const filesMap: Record<string, string> = {};
-      for (const p of patientList) {
-        if (p.id) {
-          const fileUrl = await radiologyService.getRadiologyDocumentUrl(p.id);
-          if (fileUrl) {
-            filesMap[p.id] = fileUrl;
-          }
-        }
+    // Eksekusi pengambilan berkas radiologi secara paralel
+    const filePromises = patientList.map(async (p) => {
+      if (!p.id) return null;
+      const fileUrl = await radiologyService.getRadiologyDocumentUrl(p.id);
+      return { id: p.id, fileUrl };
+    });
+
+    const fileResults = await Promise.all(filePromises);
+
+    const filesMap: Record<string, string> = {};
+    fileResults.forEach((item) => {
+      if (item && item.fileUrl) {
+        filesMap[item.id] = item.fileUrl;
       }
-      setRadiologyFiles(filesMap);
-    } catch (err) {
-      console.error('Gagal memuat data radiologi:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    });
+
+    setRadiologyFiles(filesMap);
+  } catch (err) {
+    console.error('Gagal memuat data radiologi:', err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleOpenUploadModal = (patient: Patient) => {
     setSelectedPatient(patient);

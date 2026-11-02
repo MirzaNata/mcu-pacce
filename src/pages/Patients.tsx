@@ -27,27 +27,36 @@ export const Patients = () => {
   }, []);
 
   const loadData = async () => {
-    try {
-      setLoading(true);
-      const patientList = await patientService.getPatients();
-      setPatients(patientList);
+  try {
+    setLoading(true);
+    // 1. Ambil seluruh daftar peserta
+    const patientList = await patientService.getPatients();
+    setPatients(patientList);
 
-      const records: Record<string, MCURecord> = {};
-      for (const p of patientList) {
-        if (p.id) {
-          const mcu = await mcuService.getMCUByPatientId(p.id);
-          if (mcu) {
-            records[p.id] = mcu;
-          }
-        }
+    // 2. Ambil data MCU secara PARALEL (semua sekaligus)
+    const mcuPromises = patientList.map(async (p) => {
+      if (!p.id) return null;
+      const mcu = await mcuService.getMCUByPatientId(p.id);
+      return { id: p.id, mcu };
+    });
+
+    const mcuResults = await Promise.all(mcuPromises);
+
+    // 3. Susun ke dalam state map
+    const records: Record<string, MCURecord> = {};
+    mcuResults.forEach((item) => {
+      if (item && item.mcu) {
+        records[item.id] = item.mcu;
       }
-      setMcuRecords(records);
-    } catch (err) {
-      console.error('Gagal memuat data peserta:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    });
+
+    setMcuRecords(records);
+  } catch (err) {
+    console.error('Gagal memuat data:', err);
+  } finally {
+    setLoading(false);
+  }
+};
 
   const handleDelete = async (id: string) => {
     if (confirm('Apakah Anda yakin ingin menghapus data peserta ini?')) {
