@@ -626,7 +626,7 @@ export const MCUResultDetail = () => {
               <div className="border-b-2 border-black pb-2 flex justify-between items-end">
                 <div className="flex items-center gap-3">
                   <img 
-                    src="/logo.png" 
+                    src="/public/logo.png" 
                     alt="Logo Klinik" 
                     className="h-12 w-auto object-contain shrink-0" 
                     onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
