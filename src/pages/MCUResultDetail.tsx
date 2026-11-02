@@ -801,7 +801,7 @@ export const MCUResultDetail = () => {
                 </table>
               </div>
 
-              {/* IV. RIWAYAT VAKSINASI (DIPERBARUI) */}
+              {/* IV. RIWAYAT VAKSINASI */}
               <div className="space-y-1.5">
                 <div className="font-bold text-xs bg-gray-100 p-1.5 border border-black uppercase flex justify-between">
                   <span>Riwayat Vaksinasi</span>
@@ -853,11 +853,11 @@ export const MCUResultDetail = () => {
                 </div>
               </div>
 
-              {/* VI. PEMERIKSAAN UMUM & TANDA VITAL */}
+              {/* VI. PEMERIKSAAN UMUM & TANDA VITAL & VISUS MATA */}
               <div className="space-y-1.5">
                 <div className="font-bold text-xs bg-gray-100 p-1.5 border border-black uppercase flex justify-between">
-                  <span>Pemeriksaan Umum</span>
-                  <span className="italic font-normal lowercase text-gray-600">General Examination</span>
+                  <span>Pemeriksaan Umum & Visus Mata</span>
+                  <span className="italic font-normal lowercase text-gray-600">General & Vision Examination</span>
                 </div>
                 <table className="w-full border-collapse border border-black text-xs">
                   <tbody>
@@ -881,11 +881,21 @@ export const MCUResultDetail = () => {
                       <td className="p-2 font-bold bg-gray-50 border-r border-black">Saturasi O2</td>
                       <td className="p-2">: {gen.oxygenSaturation || '-'} %</td>
                     </tr>
-                    <tr>
+                    <tr className="border-b border-black">
                       <td className="p-2 font-bold bg-gray-50 border-r border-black">BMI / Index Body</td>
                       <td className="p-2 border-r border-black font-bold">: {gen.bmi || '-'} {gen.bmiCategory ? `(${gen.bmiCategory})` : ''}</td>
                       <td className="p-2 font-bold bg-gray-50 border-r border-black">Tes Buta Warna</td>
                       <td className="p-2">: {mcuData.visionExamination?.colorBlindness || 'Normal'}</td>
+                    </tr>
+                    <tr>
+                      <td className="p-2 font-bold bg-gray-50 border-r border-black">Visus OD / OS</td>
+                      <td className="p-2 border-r border-black font-semibold">
+                        : OD (Kanan): {mcuData.visionExamination?.rightEye || '-'} | OS (Kiri): {mcuData.visionExamination?.leftEye || '-'}
+                      </td>
+                      <td className="p-2 font-bold bg-gray-50 border-r border-black">Visus OU (Binokular)</td>
+                      <td className="p-2 font-semibold">
+                        : {mcuData.visionExamination?.bothEyes || '-'} {mcuData.visionExamination?.notes ? `(${mcuData.visionExamination.notes})` : ''}
+                      </td>
                     </tr>
                   </tbody>
                 </table>
