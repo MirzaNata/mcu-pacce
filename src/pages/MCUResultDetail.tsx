@@ -149,6 +149,12 @@ export const MCUResultDetail = () => {
     );
   }
 
+  // Type assertion agar properti opsional seperti pulseRate tidak menyebabkan error TypeScript
+  const gen = (mcuData.generalExamination || {}) as Record<string, any>;
+  const doc = (mcuData.doctorConclusion || {}) as Record<string, any>;
+  const pAny = patient as unknown as Record<string, unknown>;
+  const docAny = (mcuData.doctorConclusion || {}) as unknown as Record<string, unknown>;
+
   const handlePrint = () => {
     window.print();
   };
@@ -203,9 +209,6 @@ export const MCUResultDetail = () => {
       </div>
     );
   };
-
-  const pAny = patient as unknown as Record<string, unknown>;
-  const docAny = (mcuData.doctorConclusion || {}) as unknown as Record<string, unknown>;
 
   return (
     <div className="space-y-6">
@@ -270,39 +273,37 @@ export const MCUResultDetail = () => {
           <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
             <span className="text-gray-500 block font-medium">Tekanan Darah</span>
             <span className="font-black text-gray-900 text-sm">
-              {mcuData.generalExamination?.systolic && mcuData.generalExamination?.diastolic 
-                ? `${mcuData.generalExamination.systolic}/${mcuData.generalExamination.diastolic} mmHg` 
-                : '-'}
+              {gen.systolic && gen.diastolic ? `${gen.systolic}/${gen.diastolic} mmHg` : '-'}
             </span>
           </div>
           <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
             <span className="text-gray-500 block font-medium">Nadi</span>
             <span className="font-black text-gray-900 text-sm">
-              {mcuData.generalExamination?.pulse ? `${mcuData.generalExamination.pulse} x/menit` : '-'}
+              {gen.pulse ? `${gen.pulse} x/menit` : '-'}
             </span>
           </div>
           <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
             <span className="text-gray-500 block font-medium">Laju Napas</span>
             <span className="font-black text-gray-900 text-sm">
-              {mcuData.generalExamination?.respiratoryRate ? `${mcuData.generalExamination.respiratoryRate} x/menit` : '-'}
+              {gen.respiratoryRate ? `${gen.respiratoryRate} x/menit` : '-'}
             </span>
           </div>
           <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
             <span className="text-gray-500 block font-medium">Suhu Tubuh</span>
             <span className="font-black text-gray-900 text-sm">
-              {mcuData.generalExamination?.temperature ? `${mcuData.generalExamination.temperature} °C` : '-'}
+              {gen.temperature ? `${gen.temperature} °C` : '-'}
             </span>
           </div>
           <div className="p-3 bg-gray-50 rounded-xl border border-gray-200">
             <span className="text-gray-500 block font-medium">TB / BB</span>
             <span className="font-black text-gray-900 text-sm">
-              {mcuData.generalExamination?.height || '-'} cm / {mcuData.generalExamination?.weight || '-'} kg
+              {gen.height || '-'} cm / {gen.weight || '-'} kg
             </span>
           </div>
           <div className="p-3 bg-blue-50/70 rounded-xl border border-blue-200">
             <span className="text-blue-700 block font-medium">BMI / Status</span>
             <span className="font-black text-blue-900 text-sm">
-              {mcuData.generalExamination?.bmi || '-'} {mcuData.generalExamination?.bmiCategory ? `(${mcuData.generalExamination.bmiCategory})` : ''}
+              {gen.bmi || '-'} {gen.bmiCategory ? `(${gen.bmiCategory})` : ''}
             </span>
           </div>
         </div>
@@ -531,7 +532,7 @@ export const MCUResultDetail = () => {
                 style={{ minHeight: '70px' }}
                 className="p-4 bg-gray-50 rounded-xl border border-gray-200 text-xs text-gray-800 font-medium leading-relaxed"
               >
-                {mcuData.doctorConclusion?.conclusion || 'Belum ada kesimpulan.'}
+                {doc.conclusion || 'Belum ada kesimpulan.'}
               </div>
             </div>
 
@@ -543,7 +544,7 @@ export const MCUResultDetail = () => {
                 style={{ minHeight: '70px' }}
                 className="p-4 bg-gray-50 rounded-xl border border-gray-200 text-xs text-gray-800 font-medium leading-relaxed"
               >
-                {mcuData.doctorConclusion?.recommendation || 'Belum ada rekomendasi.'}
+                {doc.recommendation || 'Belum ada rekomendasi.'}
               </div>
             </div>
           </div>
@@ -553,11 +554,11 @@ export const MCUResultDetail = () => {
               Hasil Status Akhir
             </span>
             
-            {renderFinalResultBadge(mcuData.doctorConclusion?.finalResult)}
+            {renderFinalResultBadge(doc.finalResult)}
 
             <div className="pt-2 text-xs text-gray-500 space-y-1 w-full">
               <p className="font-medium">
-                Tanggal: <span className="font-bold text-gray-700">{mcuData.doctorConclusion?.date || patient.registrationDate || '2026-10-15'}</span>
+                Tanggal: <span className="font-bold text-gray-700">{doc.date || patient.registrationDate || '2026-10-15'}</span>
               </p>
               
               {/* GAMBAR TANDA TANGAN DOKTER */}
@@ -573,7 +574,7 @@ export const MCUResultDetail = () => {
               ) : null}
 
               <p className="font-black text-gray-900 text-sm pt-1">
-                {mcuData.doctorConclusion?.doctorName || 'Dokter Pemeriksa'}
+                {doc.doctorName || 'Dokter Pemeriksa'}
               </p>
               <p className="text-[11px] text-gray-400 font-semibold">
                 Klinik Pakisaji Cardiovascular Center
@@ -583,15 +584,15 @@ export const MCUResultDetail = () => {
         </div>
       </div>
 
-      {/* MODAL PREVIEW PDF & CETAK LAPORAN LENGKAP */}
+      {/* MODAL PREVIEW PDF & CETAK LAPORAN BILINGUAL LENGKAP */}
       {showPreview && (
         <div className="fixed inset-0 z-50 bg-black/70 flex items-start justify-center p-4 overflow-y-auto print:p-0 print:bg-white print:static">
-          <div className="bg-white rounded-2xl max-w-4xl w-full my-6 p-8 shadow-2xl relative space-y-6 print:m-0 print:p-0 print:shadow-none print:w-full text-black">
+          <div className="bg-white rounded-2xl max-w-4xl w-full my-6 p-8 shadow-2xl relative space-y-5 print:m-0 print:p-0 print:shadow-none print:w-full text-black">
             
             <div className="flex items-center justify-between border-b pb-4 print:hidden">
               <div className="flex items-center gap-2">
                 <Printer className="w-5 h-5 text-blue-600" />
-                <h2 className="text-base font-bold text-gray-900">Preview Laporan MCU Resmi (Lengkap)</h2>
+                <h2 className="text-base font-bold text-gray-900">Preview Laporan MCU Resmi (Presisi PDF)</h2>
               </div>
               <div className="flex items-center gap-3">
                 <button
@@ -609,218 +610,347 @@ export const MCUResultDetail = () => {
               </div>
             </div>
 
-            {/* HALAMAN CETAK A4 LENGKAP */}
-            <div className="space-y-5 text-xs leading-relaxed">
+            {/* HALAMAN DOKUMEN CETAK A4 (RAPAT & TATA LETAK MENIRU PDF CONTOH) */}
+            <div className="space-y-4 text-xs font-sans text-gray-900 print:text-black">
               
-              {/* KOP SURAT KLINIK */}
-              <div className="border-b-2 border-blue-900 pb-3 text-center space-y-1">
-                <h1 className="text-lg font-black tracking-wide text-blue-950 uppercase">
-                  PAKISAJI CARDIOVASCULAR CENTER
-                </h1>
-                <p className="font-semibold text-gray-700 text-[11px]">
-                  Klinik Spesialis Jantung & Pembuluh Darah • Medical Check-Up Center
-                </p>
-                <p className="text-[10px] text-gray-500">
-                  Jl. Raya Karangpandan No. 88, Pakisaji, Kab. Malang, Jawa Timur • Telp: (0341) 800-123
-                </p>
-              </div>
-
-              {/* JUDUL LAPORAN */}
-              <div className="text-center pt-1">
-                <h2 className="text-sm font-black text-gray-900 uppercase tracking-widest underline decoration-2 decoration-blue-600 underline-offset-4">
-                  LAPORAN HASIL MEDICAL CHECK-UP
-                </h2>
-                <p className="text-[11px] text-gray-500 font-medium mt-1">
-                  Nomor Dokumen: <span className="font-mono font-bold text-gray-800">{patient.mcuNumber}</span>
-                </p>
-              </div>
-
-              {/* I. DATA PASIEN */}
-              <div className="p-3 bg-gray-50 rounded-xl border border-gray-200 space-y-1.5">
-                <div className="font-bold text-[11px] text-blue-900 uppercase tracking-wider border-b border-gray-200 pb-1">
-                  I. Identitas Peserta MCU
+              {/* KOP SURAT BILINGUAL */}
+              <div className="border-b-2 border-black pb-2 flex justify-between items-end">
+                <div>
+                  <h1 className="text-base font-black text-black uppercase tracking-tight">
+                    Klinik Pakisaji Cardiovascular Center
+                  </h1>
+                  <p className="text-[10px] text-gray-700 font-medium">
+                    Jl. Pakisaji No. 1, Pakisaji, Kab. Malang, Jawa Timur
+                  </p>
                 </div>
-                <div className="grid grid-cols-2 gap-y-1 gap-x-6 text-xs pt-1">
-                  <div className="flex"><span className="w-32 text-gray-500">Nama Lengkap</span>: <span className="font-bold text-gray-900 ml-1">{patient.fullName}</span></div>
-                  <div className="flex"><span className="w-32 text-gray-500">No. MCU / NIK</span>: <span className="font-mono font-bold text-gray-900 ml-1">{patient.mcuNumber} / {String(pAny.nik || '-')}</span></div>
-                  <div className="flex"><span className="w-32 text-gray-500">Jenis Kelamin / Usia</span>: <span className="font-medium text-gray-800 ml-1">{patient.gender === 'Laki-Laki' || pAny.gender === 'L' ? 'Laki-laki' : 'Perempuan'} ({String(pAny.age || '-')} Thn)</span></div>
-                  <div className="flex"><span className="w-32 text-gray-500">Perusahaan / Instansi</span>: <span className="font-medium text-gray-800 ml-1">{String(pAny.company || '-')}</span></div>
+                <div className="text-right">
+                  <h2 className="text-xs font-bold text-black uppercase">Laporan Pemeriksaan Kesehatan</h2>
+                  <p className="text-[10px] text-gray-600 italic">Medical Check Up Record</p>
                 </div>
               </div>
 
-              {/* II. TANDA VITAL */}
-              <div className="space-y-1.5">
-                <div className="font-bold text-[11px] text-blue-900 uppercase tracking-wider border-b border-gray-200 pb-1">
-                  II. Tanda Vital & Antropometri
+              {/* I. DATA PRIBADI (BILINGUAL TABEL PRESISI) */}
+              <div className="space-y-1">
+                <div className="font-bold text-[10px] bg-gray-100 p-1 border border-black uppercase flex justify-between">
+                  <span>Data Pribadi (Sesuai KTP / Passport)</span>
+                  <span className="italic font-normal lowercase text-gray-600">Personal Data (as in NID/Passport)</span>
                 </div>
-                <table className="w-full text-left border-collapse border border-gray-300 text-xs">
-                  <thead>
-                    <tr className="bg-gray-100 font-bold text-gray-800">
-                      <th className="border border-gray-300 p-1.5 text-center">Tekanan Darah</th>
-                      <th className="border border-gray-300 p-1.5 text-center">Nadi</th>
-                      <th className="border border-gray-300 p-1.5 text-center">Laju Napas</th>
-                      <th className="border border-gray-300 p-1.5 text-center">Suhu</th>
-                      <th className="border border-gray-300 p-1.5 text-center">TB / BB</th>
-                      <th className="border border-gray-300 p-1.5 text-center">BMI / Kategori</th>
-                    </tr>
-                  </thead>
+                <table className="w-full border-collapse border border-black text-[10px]">
                   <tbody>
+                    <tr className="border-b border-black">
+                      <td className="p-1 font-bold w-1/5 bg-gray-50 border-r border-black">
+                        Tanggal Registrasi<br/><span className="text-[9px] font-normal italic text-gray-500">Registration Date</span>
+                      </td>
+                      <td className="p-1 w-3/10 border-r border-black font-semibold">
+                        : {patient.registrationDate || '08-10-2026'}
+                      </td>
+                      <td className="p-1 font-bold w-1/5 bg-gray-50 border-r border-black">
+                        Gol. Darah (Rhesus)<br/><span className="text-[9px] font-normal italic text-gray-500">Blood Type</span>
+                      </td>
+                      <td className="p-1 w-3/10 font-semibold">
+                        : {patient.bloodType || '-'}
+                      </td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-1 font-bold bg-gray-50 border-r border-black">
+                        Nama Lengkap<br/><span className="text-[9px] font-normal italic text-gray-500">Full Name</span>
+                      </td>
+                      <td className="p-1 border-r border-black font-bold text-black">
+                        : {patient.fullName}
+                      </td>
+                      <td className="p-1 font-bold bg-gray-50 border-r border-black">
+                        Nomor Identitas<br/><span className="text-[9px] font-normal italic text-gray-500">Identity Number</span>
+                      </td>
+                      <td className="p-1 font-mono font-bold">
+                        : {patient.nik || patient.identityNumber || '-'}
+                      </td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-1 font-bold bg-gray-50 border-r border-black">
+                        Tanggal Lahir / Usia<br/><span className="text-[9px] font-normal italic text-gray-500">Date of Birth / Age</span>
+                      </td>
+                      <td className="p-1 border-r border-black">
+                        : {patient.dateOfBirth || '-'} ({patient.age || '-'} Thn)
+                      </td>
+                      <td className="p-1 font-bold bg-gray-50 border-r border-black">
+                        Jenis Kelamin<br/><span className="text-[9px] font-normal italic text-gray-500">Sex</span>
+                      </td>
+                      <td className="p-1 font-semibold">
+                        : [{patient.gender === 'Laki-Laki' || pAny.gender === 'L' ? '☑' : '☐'}] Laki-laki &nbsp; [{patient.gender === 'Perempuan' || pAny.gender === 'P' ? '☑' : '☐'}] Perempuan
+                      </td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-1 font-bold bg-gray-50 border-r border-black">
+                        Perusahaan / Status<br/><span className="text-[9px] font-normal italic text-gray-500">Company / Status</span>
+                      </td>
+                      <td className="p-1 border-r border-black font-semibold">
+                        : {patient.company || patient.companyName || '-'}
+                      </td>
+                      <td className="p-1 font-bold bg-gray-50 border-r border-black">
+                        No. Telp.<br/><span className="text-[9px] font-normal italic text-gray-500">Phone Number</span>
+                      </td>
+                      <td className="p-1">
+                        : {patient.phone || '-'}
+                      </td>
+                    </tr>
                     <tr>
-                      <td className="border border-gray-300 p-1.5 text-center font-bold">
-                        {mcuData.generalExamination?.systolic && mcuData.generalExamination?.diastolic 
-                          ? `${mcuData.generalExamination.systolic}/${mcuData.generalExamination.diastolic} mmHg` 
-                          : '-'}
+                      <td className="p-1 font-bold bg-gray-50 border-r border-black">
+                        Alamat<br/><span className="text-[9px] font-normal italic text-gray-500">Address</span>
                       </td>
-                      <td className="border border-gray-300 p-1.5 text-center">
-                        {mcuData.generalExamination?.pulse ? `${mcuData.generalExamination.pulse} x/menit` : '-'}
-                      </td>
-                      <td className="border border-gray-300 p-1.5 text-center">
-                        {mcuData.generalExamination?.respiratoryRate ? `${mcuData.generalExamination.respiratoryRate} x/menit` : '-'}
-                      </td>
-                      <td className="border border-gray-300 p-1.5 text-center">
-                        {mcuData.generalExamination?.temperature ? `${mcuData.generalExamination.temperature} °C` : '-'}
-                      </td>
-                      <td className="border border-gray-300 p-1.5 text-center">
-                        {mcuData.generalExamination?.height || '-'} cm / {mcuData.generalExamination?.weight || '-'} kg
-                      </td>
-                      <td className="border border-gray-300 p-1.5 text-center font-bold">
-                        {mcuData.generalExamination?.bmi || '-'} {mcuData.generalExamination?.bmiCategory ? `(${mcuData.generalExamination.bmiCategory})` : ''}
+                      <td colSpan={3} className="p-1">
+                        : {patient.address || '-'}
                       </td>
                     </tr>
                   </tbody>
                 </table>
               </div>
 
-              {/* III. ANAMNESIS & GAYA HIDUP */}
-              <div className="space-y-1.5">
-                <div className="font-bold text-[11px] text-blue-900 uppercase tracking-wider border-b border-gray-200 pb-1">
-                  III. Anamnesis Keluhan & Gaya Hidup
+              {/* II. GAYA HIDUP & KEBIASAAN */}
+              <div className="space-y-1">
+                <div className="font-bold text-[10px] bg-gray-100 p-1 border border-black uppercase flex justify-between">
+                  <span>Riwayat Kebiasaan Hidup</span>
+                  <span className="italic font-normal lowercase text-gray-600">Personal Habits</span>
                 </div>
-                <div className="p-3 border border-gray-300 rounded-lg bg-gray-50/50 space-y-1 text-[11px]">
-                  <p><span className="font-bold">Keluhan Saat Pemeriksaan:</span> {(mcuData.anamnesis?.complaints || []).map(c => ANAMNESIS_COMPLAINTS_MAP[c] || c).join(', ') || 'Tidak ada keluhan'}</p>
-                  <p><span className="font-bold">Kebiasaan Merokok:</span> {mcuData.lifestyle?.smoking?.status || 'Tidak'} {mcuData.lifestyle?.smoking?.notes ? `(${mcuData.lifestyle.smoking.notes})` : ''} | <span className="font-bold">Alkohol:</span> {mcuData.lifestyle?.alcohol?.status || 'Tidak'}</p>
-                  <p><span className="font-bold">Pola BAB / BAK:</span> {mcuData.lifestyle?.bowel?.status || 'Normal'} / {mcuData.lifestyle?.bladder?.status || 'Normal'}</p>
-                </div>
+                <table className="w-full border-collapse border border-black text-[10px]">
+                  <tbody>
+                    <tr className="border-b border-black">
+                      <td className="p-1 font-bold w-1/6 bg-gray-50 border-r border-black">Merokok / Smoking</td>
+                      <td className="p-1 w-1/3 border-r border-black">
+                        [{mcuData.lifestyle?.smoking?.status === 'Ya' ? '☑' : '☐'}] Ya &nbsp; 
+                        [{mcuData.lifestyle?.smoking?.status === 'Tidak' ? '☑' : '☐'}] Tidak 
+                        {mcuData.lifestyle?.smoking?.status === 'Ya' && ` (${mcuData.lifestyle.smoking.cigarettesPerDay || 0} btg/hr)`}
+                      </td>
+                      <td className="p-1 font-bold w-1/6 bg-gray-50 border-r border-black">Alkohol / Alcohol</td>
+                      <td className="p-1">
+                        [{mcuData.lifestyle?.alcohol?.status === 'Ya' ? '☑' : '☐'}] Ya &nbsp; 
+                        [{mcuData.lifestyle?.alcohol?.status === 'Tidak' ? '☑' : '☐'}] Tidak
+                      </td>
+                    </tr>
+                    <tr>
+                      <td className="p-1 font-bold bg-gray-50 border-r border-black">BAB / Bowel</td>
+                      <td className="p-1 border-r border-black">: {mcuData.lifestyle?.bowel?.status || 'Normal'}</td>
+                      <td className="p-1 font-bold bg-gray-50 border-r border-black">BAK / Bladder</td>
+                      <td className="p-1">: {mcuData.lifestyle?.bladder?.status || 'Normal'}</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
 
-              {/* IV. PEMERIKSAAN FISIK & VISUS */}
-              <div className="space-y-1.5">
-                <div className="font-bold text-[11px] text-blue-900 uppercase tracking-wider border-b border-gray-200 pb-1">
-                  IV. Hasil Pemeriksaan Fisik Organ & Visus
+              {/* III. RIWAYAT KESEHATAN PRIBADI & KELUARGA (TABEL 18 ITEM) */}
+              <div className="space-y-1">
+                <div className="font-bold text-[10px] bg-gray-100 p-1 border border-black uppercase flex justify-between">
+                  <span>Riwayat Kesehatan Pribadi dan Keluarga</span>
+                  <span className="italic font-normal lowercase text-gray-600">Personal and Family Medical History</span>
                 </div>
-                <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-[11px]">
-                  {PHYSICAL_EXAM_ITEMS.map((item) => {
-                    const data = (mcuData.physicalExamination?.bodyParts?.[item.id] || {}) as { status?: string; notes?: string };
+                <table className="w-full border-collapse border border-black text-[9px]">
+                  <thead>
+                    <tr className="bg-gray-100 font-bold border-b border-black text-center">
+                      <th className="p-1 text-left w-1/2 border-r border-black">Kelainan Medis / Medical Problem</th>
+                      <th className="p-1 w-1/8 border-r border-black">Pribadi / Personal</th>
+                      <th className="p-1 w-1/8 border-r border-black">Keluarga / Family</th>
+                      <th className="p-1 text-left">Keterangan / Details</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {MEDICAL_HISTORY_ITEMS.map((item) => {
+                      const data = mcuData.medicalHistory?.[item.id] || {};
+                      return (
+                        <tr key={item.id} className="border-b border-gray-300">
+                          <td className="p-1 font-medium border-r border-black">{item.label}</td>
+                          <td className="p-1 text-center border-r border-black">{data.personalHistory || 'Tidak'}</td>
+                          <td className="p-1 text-center border-r border-black">{data.familyHistory || 'Tidak'}</td>
+                          <td className="p-1">{data.description || '-'}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* IV. RIWAYAT VAKSINASI (TABEL 8 ITEM) */}
+              <div className="space-y-1">
+                <div className="font-bold text-[10px] bg-gray-100 p-1 border border-black uppercase flex justify-between">
+                  <span>Riwayat Vaksinasi</span>
+                  <span className="italic font-normal lowercase text-gray-600">Vaccination History</span>
+                </div>
+                <div className="grid grid-cols-4 gap-1 text-[9px] border border-black p-1">
+                  {VACCINATION_ITEMS.map((item) => {
+                    const data = mcuData.vaccinationHistory?.[item.id] || {};
                     return (
-                      <div key={item.id} className="flex justify-between border-b border-gray-200 py-0.5">
-                        <span className="font-medium text-gray-800">{item.label}</span>
-                        <span className={`font-bold ${data.status === 'Normal' ? 'text-green-700' : data.status === 'Tidak Normal' ? 'text-red-700' : 'text-gray-400'}`}>
-                          {data.status || 'Belum Diperiksa'}
-                        </span>
+                      <div key={item.id} className="p-0.5 border-b border-gray-200 flex justify-between">
+                        <span className="font-semibold">{item.label}:</span>
+                        <span>[{data.status === 'Ya' ? '☑' : '☐'}] Ya</span>
                       </div>
                     );
                   })}
                 </div>
-                {mcuData.visionExamination && (
-                  <div className="p-2 bg-gray-100 rounded text-[11px] flex justify-between font-medium mt-1">
-                    <span>Visus OD/OS: {mcuData.visionExamination.rightEye || '-'}/{mcuData.visionExamination.leftEye || '-'}</span>
-                    <span>Buta Warna: {mcuData.visionExamination.colorBlindness || '-'}</span>
-                  </div>
-                )}
               </div>
 
-              {/* V. PEMERIKSAAN PENUNJANG */}
-              <div className="space-y-1.5">
-                <div className="font-bold text-[11px] text-blue-900 uppercase tracking-wider border-b border-gray-200 pb-1">
-                  V. Hasil Pemeriksaan Penunjang Medis
+              {/* V. ANAMNESIS KELUHAN SAAT PEMERIKSAAN */}
+              <div className="space-y-1">
+                <div className="font-bold text-[10px] bg-gray-100 p-1 border border-black uppercase flex justify-between">
+                  <span>Anamnesis (Keluhan Saat Pemeriksaan)</span>
+                  <span className="italic font-normal lowercase text-gray-600">Any Complaints During Examination</span>
                 </div>
-                <table className="w-full text-left border-collapse border border-gray-300 text-xs">
+                <div className="border border-black p-1.5 text-[9px]">
+                  <div className="grid grid-cols-3 gap-1">
+                    {Object.entries(ANAMNESIS_COMPLAINTS_MAP).map(([key, label]) => {
+                      const isChecked = (mcuData.anamnesis?.complaints || []).includes(key);
+                      return (
+                        <div key={key} className="flex items-center gap-1">
+                          <span>[{isChecked ? '☑' : '☐'}]</span>
+                          <span className={isChecked ? 'font-bold text-black' : 'text-gray-700'}>{label}</span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  {mcuData.anamnesis?.otherComplaintText && (
+                    <div className="mt-1 pt-1 border-t border-gray-300">
+                      <span className="font-bold">Keluhan Lainnya: </span>{mcuData.anamnesis.otherComplaintText}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* VI. PEMERIKSAAN UMUM & TANDA VITAL */}
+              <div className="space-y-1">
+                <div className="font-bold text-[10px] bg-gray-100 p-1 border border-black uppercase flex justify-between">
+                  <span>Pemeriksaan Umum</span>
+                  <span className="italic font-normal lowercase text-gray-600">General Examination</span>
+                </div>
+                <table className="w-full border-collapse border border-black text-[10px]">
+                  <tbody>
+                    <tr className="border-b border-black">
+                      <td className="p-1 font-bold bg-gray-50 border-r border-black w-1/6">Tekanan Darah</td>
+                      <td className="p-1 border-r border-black w-1/3">
+                        : {gen.systolic && gen.diastolic ? `${gen.systolic}/${gen.diastolic} mmHg` : '-'}
+                      </td>
+                      <td className="p-1 font-bold bg-gray-50 border-r border-black w-1/6">Nadi / Pulse Rate</td>
+                      <td className="p-1">: {gen.pulse || gen.pulseRate || '-'} x/mnt</td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-1 font-bold bg-gray-50 border-r border-black">Laju Napas / RR</td>
+                      <td className="p-1 border-r border-black">: {gen.respiratoryRate || '-'} x/mnt</td>
+                      <td className="p-1 font-bold bg-gray-50 border-r border-black">Suhu / Temp</td>
+                      <td className="p-1">: {gen.temperature || '-'} °C</td>
+                    </tr>
+                    <tr className="border-b border-black">
+                      <td className="p-1 font-bold bg-gray-50 border-r border-black">Tinggi / Berat</td>
+                      <td className="p-1 border-r border-black">: {gen.height || '-'} cm / {gen.weight || '-'} kg</td>
+                      <td className="p-1 font-bold bg-gray-50 border-r border-black">Saturasi O2</td>
+                      <td className="p-1">: {gen.oxygenSaturation || '-'} %</td>
+                    </tr>
+                    <tr>
+                      <td className="p-1 font-bold bg-gray-50 border-r border-black">BMI / Index Body</td>
+                      <td className="p-1 border-r border-black font-bold">: {gen.bmi || '-'} {gen.bmiCategory ? `(${gen.bmiCategory})` : ''}</td>
+                      <td className="p-1 font-bold bg-gray-50 border-r border-black">Tes Buta Warna</td>
+                      <td className="p-1">: {mcuData.visionExamination?.colorBlindness || 'Normal'}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+
+              {/* VII. PEMERIKSAAN FISIK ORGAN (14 ITEM) */}
+              <div className="space-y-1">
+                <div className="font-bold text-[10px] bg-gray-100 p-1 border border-black uppercase flex justify-between">
+                  <span>Pemeriksaan Fisik</span>
+                  <span className="italic font-normal lowercase text-gray-600">General Physical Examination</span>
+                </div>
+                <table className="w-full border-collapse border border-black text-[9px]">
                   <thead>
-                    <tr className="bg-gray-100 font-bold text-gray-800">
-                      <th className="border border-gray-300 p-1.5 w-1/3">Pemeriksaan</th>
-                      <th className="border border-gray-300 p-1.5 text-center w-1/4">Status Hasil</th>
-                      <th className="border border-gray-300 p-1.5 w-1/2">Catatan Temuan</th>
+                    <tr className="bg-gray-100 font-bold border-b border-black">
+                      <th className="p-1 text-left w-1/3 border-r border-black">Organ / Body Part</th>
+                      <th className="p-1 text-center w-1/4 border-r border-black">Hasil / Result</th>
+                      <th className="p-1 text-left">Keterangan / Notes</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {PHYSICAL_EXAM_ITEMS.map((item) => {
+                      const data = (mcuData.physicalExamination?.bodyParts?.[item.id] || {}) as { status?: string; notes?: string };
+                      return (
+                        <tr key={item.id} className="border-b border-gray-300">
+                          <td className="p-1 font-medium border-r border-black">{item.label}</td>
+                          <td className="p-1 text-center font-bold border-r border-black">{data.status || 'Normal'}</td>
+                          <td className="p-1">{data.notes || '-'}</td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* VIII. PEMERIKSAAN PENUNJANG (6 UTAMA + TAMBAHAN) */}
+              <div className="space-y-1">
+                <div className="font-bold text-[10px] bg-gray-100 p-1 border border-black uppercase flex justify-between">
+                  <span>Pemeriksaan Penunjang</span>
+                  <span className="italic font-normal lowercase text-gray-600">Other Tests Findings</span>
+                </div>
+                <table className="w-full border-collapse border border-black text-[9px]">
+                  <thead>
+                    <tr className="bg-gray-100 font-bold border-b border-black">
+                      <th className="p-1 text-left w-1/3 border-r border-black">Pemeriksaan / Test</th>
+                      <th className="p-1 text-center w-1/4 border-r border-black">Hasil / Result</th>
+                      <th className="p-1 text-left">Keterangan / Details</th>
                     </tr>
                   </thead>
                   <tbody>
                     {SUPPORTING_EXAM_ITEMS.map((item) => {
                       const data = (mcuData.supportingExamination?.mainExams?.[item.id] || {}) as { status?: string; notes?: string };
                       return (
-                        <tr key={item.id}>
-                          <td className="border border-gray-300 p-1 font-semibold">{item.label}</td>
-                          <td className="border border-gray-300 p-1 text-center font-bold">
-                            {data.status || 'Belum Diperiksa'}
-                          </td>
-                          <td className="border border-gray-300 p-1 text-gray-700">{data.notes || '-'}</td>
+                        <tr key={item.id} className="border-b border-gray-300">
+                          <td className="p-1 font-medium border-r border-black">{item.label}</td>
+                          <td className="p-1 text-center font-bold border-r border-black">{data.status || 'Normal'}</td>
+                          <td className="p-1">{data.notes || '-'}</td>
                         </tr>
                       );
                     })}
                     {(mcuData.supportingExamination?.additionalExams || []).map((exam) => (
-                      <tr key={exam.id}>
-                        <td className="border border-gray-300 p-1 font-semibold">{exam.name}</td>
-                        <td className="border border-gray-300 p-1 text-center font-bold">{exam.status || 'Belum Diperiksa'}</td>
-                        <td className="border border-gray-300 p-1 text-gray-700">{exam.notes || '-'}</td>
+                      <tr key={exam.id} className="border-b border-gray-300">
+                        <td className="p-1 font-medium border-r border-black">{exam.name}</td>
+                        <td className="p-1 text-center font-bold border-r border-black">{exam.status || 'Normal'}</td>
+                        <td className="p-1">{exam.notes || '-'}</td>
                       </tr>
                     ))}
                   </tbody>
                 </table>
               </div>
 
-              {/* VI. KESIMPULAN & TANDA TANGAN DOKTER */}
-              <div className="pt-2 border-t border-gray-300 space-y-3">
-                <div className="font-bold text-[11px] text-blue-900 uppercase tracking-wider">
-                  VI. Kesimpulan & Rekomendasi Kelayakan Medis
+              {/* IX. KESIMPULAN, SARAN, DOKTER & TANDA TANGAN */}
+              <div className="pt-2 border-t-2 border-black space-y-2 print:break-inside-avoid">
+                <div className="font-bold text-[10px] bg-gray-100 p-1 border border-black uppercase flex justify-between">
+                  <span>Kesimpulan & Saran</span>
+                  <span className="italic font-normal lowercase text-gray-600">Resume & Advice</span>
                 </div>
 
-                <div className="grid grid-cols-3 gap-4 border border-gray-300 p-3 rounded-xl bg-gray-50/50">
-                  <div className="col-span-2 space-y-2">
-                    <div>
-                      <span className="font-bold text-gray-700 block text-[11px]">Kesimpulan Klinik:</span>
-                      <p className="text-gray-900 font-medium leading-normal mt-0.5">
-                        {mcuData.doctorConclusion?.conclusion || 'Belum ada kesimpulan.'}
-                      </p>
-                    </div>
-                    <div>
-                      <span className="font-bold text-gray-700 block text-[11px]">Rekomendasi / Saran:</span>
-                      <p className="text-gray-900 font-medium leading-normal mt-0.5">
-                        {mcuData.doctorConclusion?.recommendation || 'Belum ada rekomendasi.'}
-                      </p>
-                    </div>
+                <div className="border border-black p-2 space-y-1.5 text-[10px]">
+                  <p className="italic text-gray-700">
+                    Dengan ini saya menyatakan telah melakukan pemeriksaan terhadap pasien dan mencatat penemuan klinis seperti di atas.<br/>
+                    <span className="text-[9px] text-gray-500">I certify that I have examined the above-named person and my findings are as above.</span>
+                  </p>
+                  <p className="font-bold pt-1">
+                    Kesimpulan Kelayakan Kerja: <span className="underline uppercase">{doc.conclusion || doc.finalResult || 'BELUM ADA KESIMPULAN'}</span>
+                  </p>
+                  <p><span className="font-bold">Saran / Advice:</span> {doc.recommendation || 'Tidak ada saran khusus'}</p>
+                </div>
+
+                <div className="flex justify-between items-end pt-3">
+                  <div className="text-[9px] text-gray-500 italic max-w-sm">
+                    Dokumen hasil pemeriksaan kesehatan ini dicetak dan disahkan oleh Klinik Pakisaji Cardiovascular Center Malang.
                   </div>
-
-                  <div className="flex flex-col items-center justify-between text-center border-l border-gray-300 pl-3 space-y-2">
-                    <div>
-                      <span className="text-[10px] font-bold text-gray-500 uppercase block">Status Kelayakan</span>
-                      <div className="mt-1">
-                        {renderFinalResultBadge(mcuData.doctorConclusion?.finalResult)}
-                      </div>
-                    </div>
-
-                    {/* FOTO TANDA TANGAN DOKTER */}
-                    <div className="flex flex-col items-center my-1">
+                  <div className="text-center w-56 space-y-0.5">
+                    <p className="text-[10px] font-bold">Malang, {doc.date || patient.registrationDate || '10 Oktober 2026'}</p>
+                    <p className="text-[9px] text-gray-600">Dokter Pemeriksa / Examining Physician,</p>
+                    <div className="h-14 flex items-center justify-center my-1">
                       {docAny.doctorSignature ? (
-                        <img 
-                          src={String(docAny.doctorSignature)} 
-                          alt="Tanda Tangan Dokter" 
-                          style={{ maxWidth: '140px' }}
-                          className="h-14 w-auto object-contain" 
-                        />
+                        <img src={String(docAny.doctorSignature)} alt="Tanda Tangan Dokter" className="max-h-14 object-contain" />
                       ) : (
-                        <div className="h-14 flex items-center justify-center text-gray-300 italic text-[10px]">
-                          ( Tanda Tangan Dokter )
+                        <div className="border border-dashed border-gray-300 w-full h-10 flex items-center justify-center text-[9px] text-gray-400">
+                          [ Tanda Tangan Dokter ]
                         </div>
                       )}
-                      <span className="font-black text-gray-900 text-xs border-b border-gray-800 pb-0.5 px-2">
-                        {mcuData.doctorConclusion?.doctorName || 'Dokter Pemeriksa'}
-                      </span>
-                      <span className="text-[10px] text-gray-500 font-medium mt-0.5">
-                        SIP / Dokter Pemeriksa MCU
-                      </span>
                     </div>
-
-                    <div className="text-[10px] text-gray-500 font-medium">
-                      Malang, {mcuData.doctorConclusion?.date || patient.registrationDate || '15 Oktober 2026'}
-                    </div>
+                    <p className="font-bold text-xs underline">{doc.doctorName || 'dr. Syifa Azzahra'}</p>
+                    <p className="text-[9px] text-gray-500">Dokter Umum / General Practitioner</p>
                   </div>
                 </div>
               </div>
@@ -829,6 +959,23 @@ export const MCUResultDetail = () => {
           </div>
         </div>
       )}
+
+      {/* CSS KHUSUS MEDIA PRINT A4 */}
+      <style>{`
+        @media print {
+          @page {
+            size: A4 portrait;
+            margin: 8mm;
+          }
+          body {
+            background-color: white !important;
+            color: black !important;
+          }
+          .print\\:hidden {
+            display: none !important;
+          }
+        }
+      `}</style>
     </div>
   );
 };
