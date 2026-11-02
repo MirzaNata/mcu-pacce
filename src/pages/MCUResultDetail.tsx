@@ -255,7 +255,7 @@ export const MCUResultDetail = () => {
       </div>
 
       {/* 1. INFORMASI PESERTA CARD */}
-      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4">
+      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4 print:hidden">
         <div className="flex items-center gap-2 text-blue-600 font-bold text-xs uppercase tracking-wider border-b border-gray-100 pb-3">
           <UserIcon className="w-4 h-4" /> Informasi Identitas Peserta
         </div>
@@ -282,7 +282,7 @@ export const MCUResultDetail = () => {
       </div>
 
       {/* 2. TANDA VITAL */}
-      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4">
+      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4 print:hidden">
         <div className="flex items-center gap-2 text-blue-600 font-bold text-xs uppercase tracking-wider border-b border-gray-100 pb-3">
           <Activity className="w-4 h-4" /> Pemeriksaan Tanda Vital & Antropometri
         </div>
@@ -327,7 +327,7 @@ export const MCUResultDetail = () => {
       </div>
 
       {/* 3. ANAMNESIS (KELUHAN) */}
-      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4">
+      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4 print:hidden">
         <div className="flex items-center gap-2 text-blue-600 font-bold text-xs uppercase tracking-wider border-b border-gray-100 pb-3">
           <MessageSquare className="w-4 h-4" /> Anamnesis (Keluhan Saat Ini)
         </div>
@@ -353,7 +353,7 @@ export const MCUResultDetail = () => {
       </div>
 
       {/* 4. RIWAYAT KESEHATAN */}
-      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4">
+      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4 print:hidden">
         <div className="flex items-center gap-2 text-blue-600 font-bold text-xs uppercase tracking-wider border-b border-gray-100 pb-3">
           <ClipboardList className="w-4 h-4" /> Riwayat Kesehatan Peserta
         </div>
@@ -393,7 +393,7 @@ export const MCUResultDetail = () => {
       </div>
 
       {/* 5. RIWAYAT VAKSINASI */}
-      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4">
+      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4 print:hidden">
         <div className="flex items-center gap-2 text-blue-600 font-bold text-xs uppercase tracking-wider border-b border-gray-100 pb-3">
           <ShieldCheck className="w-4 h-4" /> Riwayat Vaksinasi
         </div>
@@ -415,7 +415,7 @@ export const MCUResultDetail = () => {
       </div>
 
       {/* 6. GAYA HIDUP & KEBIASAAN */}
-      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4">
+      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4 print:hidden">
         <div className="flex items-center gap-2 text-blue-600 font-bold text-xs uppercase tracking-wider border-b border-gray-100 pb-3">
           <Coffee className="w-4 h-4" /> Gaya Hidup & Kebiasaan
         </div>
@@ -447,7 +447,7 @@ export const MCUResultDetail = () => {
       </div>
 
       {/* 7. PEMERIKSAAN FISIK ORGAN & VISUS MATA */}
-      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4">
+      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4 print:hidden">
         <div className="flex items-center gap-2 text-blue-600 font-bold text-xs uppercase tracking-wider border-b border-gray-100 pb-3">
           <UserIcon className="w-4 h-4" /> Pemeriksaan Fisik Organ & Visus
         </div>
@@ -486,7 +486,7 @@ export const MCUResultDetail = () => {
       </div>
 
       {/* 8. PEMERIKSAAN PENUNJANG MEDIS */}
-      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4">
+      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4 print:hidden">
         <div className="flex items-center gap-2 text-blue-600 font-bold text-xs uppercase tracking-wider border-b border-gray-100 pb-3">
           <Stethoscope className="w-4 h-4" /> Pemeriksaan Penunjang Medis
         </div>
@@ -534,7 +534,7 @@ export const MCUResultDetail = () => {
       </div>
 
       {/* 9. KESIMPULAN & REKOMENDASI DOKTER */}
-      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4">
+      <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-xs space-y-4 print:hidden">
         <div className="flex items-center gap-2 text-blue-600 font-bold text-xs uppercase tracking-wider border-b border-gray-100 pb-3">
           <FileCheck className="w-4 h-4" /> Kesimpulan & Rekomendasi Dokter
         </div>
@@ -627,8 +627,8 @@ export const MCUResultDetail = () => {
               </div>
             </div>
 
-            {/* DOKUMEN CETAK A4 PROPOSIONAL */}
-            <div className="space-y-5 text-xs font-sans text-gray-900 print:text-black">
+            {/* AREA UTAMA YANG AKAN DICETAK KE PDF (ID: printable-mcu-report) */}
+            <div id="printable-mcu-report" className="space-y-5 text-xs font-sans text-gray-900 print:text-black">
               
               {/* KOP SURAT BILINGUAL DENGAN LOGO */}
               <div className="border-b-2 border-black pb-2 flex justify-between items-end">
@@ -974,7 +974,7 @@ export const MCUResultDetail = () => {
                 </table>
               </div>
 
-              {/* IX. KESIMPULAN, SARAN, DOKTER & TANDA TANGAN (PERBAIKAN FIT/UNFIT) */}
+              {/* IX. KESIMPULAN, SARAN, DOKTER & TANDA TANGAN */}
               <div className="pt-3 border-t-2 border-black space-y-2.5 print:break-inside-avoid">
                 <div className="font-bold text-xs bg-gray-100 p-1.5 border border-black uppercase flex justify-between">
                   <span>Kesimpulan & Saran</span>
@@ -987,7 +987,6 @@ export const MCUResultDetail = () => {
                     <span className="text-[11px] text-gray-500">I certify that I have examined the above-named person and my findings are as above.</span>
                   </p>
                   
-                  {/* MEMISAHKAN STATUS FIT/UNFIT DAN CATATAN KESIMPULAN DOKTER */}
                   <div className="pt-1 space-y-1">
                     <p className="font-bold text-sm">
                       Status Kelayakan Kerja: {' '}
@@ -1073,19 +1072,26 @@ export const MCUResultDetail = () => {
         </div>
       )}
 
-      {/* CSS KHUSUS MEDIA PRINT A4 */}
+      {/* CSS KHUSUS MEDIA PRINT A4 - ISOLASI HANYA DOKUMEN LAPORAN */}
       <style>{`
         @media print {
           @page {
             size: A4 portrait;
             margin: 10mm;
           }
-          body {
-            background-color: white !important;
-            color: black !important;
+          body * {
+            visibility: hidden !important;
           }
-          .print\\:hidden {
-            display: none !important;
+          #printable-mcu-report, #printable-mcu-report * {
+            visibility: visible !important;
+          }
+          #printable-mcu-report {
+            position: absolute !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
           }
         }
       `}</style>
