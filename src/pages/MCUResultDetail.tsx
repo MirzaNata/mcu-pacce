@@ -153,7 +153,7 @@ export const MCUResultDetail = () => {
 
   if (loading || !patient || !mcuData) {
     return (
-      <div className="p-8 text-center text-gray-500 font-medium">
+      <div className="p-8 text-center text-gray-500 font-medium print:hidden">
         Memuat detail hasil MCU dari Supabase...
       </div>
     );
@@ -627,8 +627,8 @@ export const MCUResultDetail = () => {
               </div>
             </div>
 
-            {/* AREA UTAMA YANG AKAN DICETAK KE PDF (ID: printable-mcu-report) */}
-            <div id="printable-mcu-report" className="space-y-5 text-xs font-sans text-gray-900 print:text-black">
+            {/* DOKUMEN CETAK A4 PROPOSIONAL */}
+            <div className="space-y-5 text-xs font-sans text-gray-900 print:text-black">
               
               {/* KOP SURAT BILINGUAL DENGAN LOGO */}
               <div className="border-b-2 border-black pb-2 flex justify-between items-end">
@@ -1072,26 +1072,37 @@ export const MCUResultDetail = () => {
         </div>
       )}
 
-      {/* CSS KHUSUS MEDIA PRINT A4 - ISOLASI HANYA DOKUMEN LAPORAN */}
+      {/* CSS KHUSUS MEDIA PRINT A4 */}
       <style>{`
         @media print {
           @page {
             size: A4 portrait;
             margin: 10mm;
           }
-          body * {
-            visibility: hidden !important;
+          /* Sembunyikan elemen navigasi utama, sidebar, dan konten di belakang modal */
+          aside, nav, header, .print\\:hidden {
+            display: none !important;
           }
-          #printable-mcu-report, #printable-mcu-report * {
-            visibility: visible !important;
+          body {
+            background-color: white !important;
+            color: black !important;
+            overflow: visible !important;
           }
-          #printable-mcu-report {
-            position: absolute !important;
-            left: 0 !important;
-            top: 0 !important;
+          /* Hilangkan efek modal overlay agar mengalir secara alami di halaman A4 */
+          .fixed {
+            position: static !important;
+            background: transparent !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            overflow: visible !important;
+          }
+          .fixed > div {
+            max-width: 100% !important;
             width: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
+            box-shadow: none !important;
+            border: none !important;
           }
         }
       `}</style>
