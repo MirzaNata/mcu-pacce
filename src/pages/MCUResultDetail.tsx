@@ -179,7 +179,7 @@ export const MCUResultDetail = () => {
     if (result === 'FIT') {
       return (
         <div className="px-5 py-2 bg-green-100 text-green-800 border border-green-300 font-black rounded-xl text-xs uppercase tracking-wide inline-flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4" /> FIT (SEHAT / LAIK KERJA)
+          <CheckCircle2 className="w-4 h-4" /> FIT
         </div>
       );
     }
@@ -193,7 +193,7 @@ export const MCUResultDetail = () => {
     if (result === 'UNFIT') {
       return (
         <div className="px-5 py-2 bg-red-100 text-red-800 border border-red-300 font-black rounded-xl text-xs uppercase tracking-wide inline-flex items-center gap-2">
-          <XCircle className="w-4 h-4" /> UNFIT (TIDAK LAIK KERJA)
+          <XCircle className="w-4 h-4" /> UNFIT
         </div>
       );
     }
