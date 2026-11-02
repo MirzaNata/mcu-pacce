@@ -17,10 +17,14 @@ import {
   ClipboardList,
   ShieldCheck,
   Coffee,
-  Eye as VisionIcon
+  Eye as VisionIcon,
+  FlaskConical,
+  Scan
 } from 'lucide-react';
 import { mcuService } from '../services/mcuService';
 import { patientService } from '../services/patientService';
+import { labService } from '../services/labService';
+import { radiologyService } from '../services/radiologyService';
 import type { Patient, MCURecord } from '../types';
 
 const ANAMNESIS_COMPLAINTS_MAP: Record<string, string> = {
@@ -114,6 +118,8 @@ export const MCUResultDetail = () => {
   const [showPreview, setShowPreview] = useState(false);
   const [patient, setPatient] = useState<Patient | null>(null);
   const [mcuData, setMcuData] = useState<MCURecord | null>(null);
+  const [labFileUrl, setLabFileUrl] = useState<string | null>(null);
+  const [radiologyFileUrl, setRadiologyFileUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -123,11 +129,15 @@ export const MCUResultDetail = () => {
       Promise.all([
         patientService.getPatientById(id),
         mcuService.getMCUByPatientId(id).then((res) => res || mcuService.initializeOrGetMCU(id)),
+        labService.getLabDocumentUrl(id),
+        radiologyService.getRadiologyDocumentUrl(id),
       ])
-        .then(([patientRes, mcuRes]) => {
+        .then(([patientRes, mcuRes, labUrl, radUrl]) => {
           if (isMounted) {
             setPatient(patientRes);
             setMcuData(mcuRes);
+            setLabFileUrl(labUrl);
+            setRadiologyFileUrl(radUrl);
             setLoading(false);
           }
         })
@@ -149,7 +159,6 @@ export const MCUResultDetail = () => {
     );
   }
 
-  // Type assertion agar properti opsional seperti pulseRate tidak menyebabkan error TypeScript
   const gen = (mcuData.generalExamination || {}) as Record<string, any>;
   const doc = (mcuData.doctorConclusion || {}) as Record<string, any>;
   const pAny = patient as unknown as Record<string, unknown>;
@@ -610,7 +619,7 @@ export const MCUResultDetail = () => {
               </div>
             </div>
 
-            {/* HALAMAN DOKUMEN CETAK A4 (RAPAT & TATA LETAK MENIRU PDF CONTOH) */}
+            {/* HALAMAN DOKUMEN CETAK A4 */}
             <div className="space-y-4 text-xs font-sans text-gray-900 print:text-black">
               
               {/* KOP SURAT BILINGUAL */}
@@ -629,7 +638,7 @@ export const MCUResultDetail = () => {
                 </div>
               </div>
 
-              {/* I. DATA PRIBADI (BILINGUAL TABEL PRESISI) */}
+              {/* I. DATA PRIBADI */}
               <div className="space-y-1">
                 <div className="font-bold text-[10px] bg-gray-100 p-1 border border-black uppercase flex justify-between">
                   <span>Data Pribadi (Sesuai KTP / Passport)</span>
@@ -736,7 +745,7 @@ export const MCUResultDetail = () => {
                 </table>
               </div>
 
-              {/* III. RIWAYAT KESEHATAN PRIBADI & KELUARGA (TABEL 18 ITEM) */}
+              {/* III. RIWAYAT KESEHATAN PRIBADI & KELUARGA */}
               <div className="space-y-1">
                 <div className="font-bold text-[10px] bg-gray-100 p-1 border border-black uppercase flex justify-between">
                   <span>Riwayat Kesehatan Pribadi dan Keluarga</span>
@@ -767,7 +776,7 @@ export const MCUResultDetail = () => {
                 </table>
               </div>
 
-              {/* IV. RIWAYAT VAKSINASI (TABEL 8 ITEM) */}
+              {/* IV. RIWAYAT VAKSINASI */}
               <div className="space-y-1">
                 <div className="font-bold text-[10px] bg-gray-100 p-1 border border-black uppercase flex justify-between">
                   <span>Riwayat Vaksinasi</span>
@@ -786,7 +795,7 @@ export const MCUResultDetail = () => {
                 </div>
               </div>
 
-              {/* V. ANAMNESIS KELUHAN SAAT PEMERIKSAAN */}
+              {/* V. ANAMNESIS KELUHAN */}
               <div className="space-y-1">
                 <div className="font-bold text-[10px] bg-gray-100 p-1 border border-black uppercase flex justify-between">
                   <span>Anamnesis (Keluhan Saat Pemeriksaan)</span>
@@ -850,7 +859,7 @@ export const MCUResultDetail = () => {
                 </table>
               </div>
 
-              {/* VII. PEMERIKSAAN FISIK ORGAN (14 ITEM) */}
+              {/* VII. PEMERIKSAAN FISIK ORGAN */}
               <div className="space-y-1">
                 <div className="font-bold text-[10px] bg-gray-100 p-1 border border-black uppercase flex justify-between">
                   <span>Pemeriksaan Fisik</span>
@@ -879,7 +888,7 @@ export const MCUResultDetail = () => {
                 </table>
               </div>
 
-              {/* VIII. PEMERIKSAAN PENUNJANG (6 UTAMA + TAMBAHAN) */}
+              {/* VIII. PEMERIKSAAN PENUNJANG */}
               <div className="space-y-1">
                 <div className="font-bold text-[10px] bg-gray-100 p-1 border border-black uppercase flex justify-between">
                   <span>Pemeriksaan Penunjang</span>
@@ -954,6 +963,48 @@ export const MCUResultDetail = () => {
                   </div>
                 </div>
               </div>
+
+              {/* HALAMAN LAMPIRAN 1: HASIL LABORATORIUM */}
+              {labFileUrl && (
+                <div className="print:break-before-always pt-6 border-t-2 border-black space-y-3">
+                  <div className="font-bold text-[11px] bg-gray-200 p-1.5 border border-black uppercase flex items-center justify-between">
+                    <span className="flex items-center gap-1.5"><FlaskConical className="w-4 h-4" /> Lampiran I: Hasil Pemeriksaan Laboratorium</span>
+                    <span className="text-[9px] text-gray-600 font-normal">Pasien: {patient.fullName} ({patient.mcuNumber})</span>
+                  </div>
+                  <div className="w-full border border-black overflow-hidden bg-gray-50 flex justify-center">
+                    {labFileUrl.toLowerCase().endsWith('.pdf') ? (
+                      <iframe 
+                        src={labFileUrl} 
+                        className="w-full h-200 border-none"
+                        title="Berkas PDF Hasil Laboratorium"
+                      />
+                    ) : (
+                      <img src={labFileUrl} alt="Hasil Laboratorium" className="max-w-full h-auto object-contain" />
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* HALAMAN LAMPIRAN 2: HASIL RADIOLOGI / RONTGEN */}
+              {radiologyFileUrl && (
+                <div className="print:break-before-always pt-6 border-t-2 border-black space-y-3">
+                  <div className="font-bold text-[11px] bg-gray-200 p-1.5 border border-black uppercase flex items-center justify-between">
+                    <span className="flex items-center gap-1.5"><Scan className="w-4 h-4" /> Lampiran II: Hasil Pemeriksaan Radiologi / Rontgen</span>
+                    <span className="text-[9px] text-gray-600 font-normal">Pasien: {patient.fullName} ({patient.mcuNumber})</span>
+                  </div>
+                  <div className="w-full border border-black overflow-hidden bg-gray-50 flex justify-center">
+                    {radiologyFileUrl.toLowerCase().endsWith('.pdf') ? (
+                      <iframe 
+                        src={radiologyFileUrl} 
+                        className="w-full h-200 border-none"
+                        title="Berkas PDF Hasil Radiologi"
+                      />
+                    ) : (
+                      <img src={radiologyFileUrl} alt="Hasil Radiologi" className="max-w-full h-auto object-contain" />
+                    )}
+                  </div>
+                </div>
+              )}
 
             </div>
           </div>
