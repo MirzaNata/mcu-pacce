@@ -190,6 +190,14 @@ export const MCUResultDetail = () => {
     );
   };
 
+  const formatFinalResultText = (res?: string) => {
+    if (!res) return 'BELUM DITENTUKAN DOKTER';
+    if (res === 'FIT') return 'FIT / LAIK KERJA';
+    if (res === 'FIT_DENGAN_CATATAN') return 'FIT DENGAN CATATAN / LAIK DENGAN CATATAN';
+    if (res === 'UNFIT') return 'UNFIT / TIDAK LAIK KERJA';
+    return res;
+  };
+
   const renderFinalResultBadge = (result?: string) => {
     if (result === 'FIT') {
       return (
@@ -966,7 +974,7 @@ export const MCUResultDetail = () => {
                 </table>
               </div>
 
-              {/* IX. KESIMPULAN, SARAN, DOKTER & TANDA TANGAN */}
+              {/* IX. KESIMPULAN, SARAN, DOKTER & TANDA TANGAN (PERBAIKAN FIT/UNFIT) */}
               <div className="pt-3 border-t-2 border-black space-y-2.5 print:break-inside-avoid">
                 <div className="font-bold text-xs bg-gray-100 p-1.5 border border-black uppercase flex justify-between">
                   <span>Kesimpulan & Saran</span>
@@ -978,10 +986,22 @@ export const MCUResultDetail = () => {
                     Dengan ini saya menyatakan telah melakukan pemeriksaan terhadap pasien dan mencatat penemuan klinis seperti di atas.<br/>
                     <span className="text-[11px] text-gray-500">I certify that I have examined the above-named person and my findings are as above.</span>
                   </p>
-                  <p className="font-bold pt-1 text-sm">
-                    Kesimpulan Kelayakan Kerja: <span className="underline uppercase">{doc.conclusion || doc.finalResult || 'BELUM ADA KESIMPULAN'}</span>
-                  </p>
-                  <p className="text-xs"><span className="font-bold">Saran / Advice:</span> {doc.recommendation || 'Tidak ada saran khusus'}</p>
+                  
+                  {/* MEMISAHKAN STATUS FIT/UNFIT DAN CATATAN KESIMPULAN DOKTER */}
+                  <div className="pt-1 space-y-1">
+                    <p className="font-bold text-sm">
+                      Status Kelayakan Kerja: {' '}
+                      <span className="font-black text-black border border-black px-2 py-0.5 bg-gray-100 rounded inline-block uppercase">
+                        {formatFinalResultText(doc.finalResult)}
+                      </span>
+                    </p>
+                    <p className="text-xs">
+                      <span className="font-bold">Kesimpulan Klinis Dokter:</span> {doc.conclusion || '-'}
+                    </p>
+                    <p className="text-xs">
+                      <span className="font-bold">Saran / Advice:</span> {doc.recommendation || 'Tidak ada saran khusus'}
+                    </p>
+                  </div>
                 </div>
 
                 <div className="flex justify-between items-end pt-4">
