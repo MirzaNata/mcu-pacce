@@ -593,7 +593,7 @@ export const MCUResultDetail = () => {
         </div>
       </div>
 
-      {/* MODAL PREVIEW PDF & CETAK LAPORAN BILINGUAL LENGKAP DENGAN LOGO */}
+      {/* MODAL PREVIEW PDF & CETAK LAPORAN BILINGUAL LENGKAP STANDAR PERUSAHAAN */}
       {showPreview && (
         <div className="fixed inset-0 z-50 bg-black/70 flex items-start justify-center p-4 overflow-y-auto print:p-0 print:bg-white print:static">
           <div className="bg-white rounded-2xl max-w-4xl w-full my-6 p-8 shadow-2xl relative space-y-6 print:m-0 print:p-0 print:shadow-none print:w-full text-black">
@@ -722,7 +722,7 @@ export const MCUResultDetail = () => {
                 </table>
               </div>
 
-              {/* II. GAYA HIDUP & KEBIASAAN */}
+              {/* II. GAYA HIDUP & KEBIASAAN (REVISI HASIL MEROKOK & ALKOHOL) */}
               <div className="space-y-1.5">
                 <div className="font-bold text-xs bg-gray-100 p-1.5 border border-black uppercase flex justify-between">
                   <span>Riwayat Kebiasaan Hidup</span>
@@ -733,14 +733,31 @@ export const MCUResultDetail = () => {
                     <tr className="border-b border-black">
                       <td className="p-2 font-bold w-1/6 bg-gray-50 border-r border-black">Merokok / Smoking</td>
                       <td className="p-2 w-1/3 border-r border-black">
-                        [{mcuData.lifestyle?.smoking?.status === 'Ya' ? '☑' : '☐'}] Ya &nbsp; 
-                        [{mcuData.lifestyle?.smoking?.status === 'Tidak' ? '☑' : '☐'}] Tidak 
-                        {mcuData.lifestyle?.smoking?.status === 'Ya' && ` (${mcuData.lifestyle.smoking.cigarettesPerDay || 0} btg/hr)`}
+                        <div>
+                          [{mcuData.lifestyle?.smoking?.status === 'Ya' ? '☑' : '☐'}] Ya 
+                          {mcuData.lifestyle?.smoking?.status === 'Ya' && (
+                            <span className="font-bold text-black ml-1">
+                              ({mcuData.lifestyle.smoking.cigarettesPerDay || 0} btg/hr{mcuData.lifestyle.smoking.durationYears ? `, ${mcuData.lifestyle.smoking.durationYears} thn` : ''})
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-1">
+                          [{mcuData.lifestyle?.smoking?.status === 'Tidak' ? '☑' : '☐'}] Tidak
+                        </div>
                       </td>
                       <td className="p-2 font-bold w-1/6 bg-gray-50 border-r border-black">Alkohol / Alcohol</td>
                       <td className="p-2">
-                        [{mcuData.lifestyle?.alcohol?.status === 'Ya' ? '☑' : '☐'}] Ya &nbsp; 
-                        [{mcuData.lifestyle?.alcohol?.status === 'Tidak' ? '☑' : '☐'}] Tidak
+                        <div>
+                          [{mcuData.lifestyle?.alcohol?.status === 'Ya' ? '☑' : '☐'}] Ya
+                          {mcuData.lifestyle?.alcohol?.status === 'Ya' && (
+                            <span className="font-bold text-black ml-1">
+                              ({mcuData.lifestyle.alcohol.bottlesPerDay || 0} botol/hr{mcuData.lifestyle.alcohol.durationYears ? `, ${mcuData.lifestyle.alcohol.durationYears} thn` : ''})
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-1">
+                          [{mcuData.lifestyle?.alcohol?.status === 'Tidak' ? '☑' : '☐'}] Tidak
+                        </div>
                       </td>
                     </tr>
                     <tr>
