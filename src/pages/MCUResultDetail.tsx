@@ -26,6 +26,7 @@ import { patientService } from '../services/patientService';
 import { labService } from '../services/labService';
 import { radiologyService } from '../services/radiologyService';
 import type { Patient, MCURecord } from '../types';
+import { PdfAttachmentRenderer } from '../components/PdfAttachmentRenderer';
 
 const ANAMNESIS_COMPLAINTS_MAP: Record<string, string> = {
   nyeri_dada: 'Nyeri dada',
@@ -165,28 +166,18 @@ export const MCUResultDetail = () => {
   const docAny = (mcuData.doctorConclusion || {}) as unknown as Record<string, unknown>;
 
   const handlePrint = () => {
-  // Lepas fokus dari elemen embed/iframe lampiran jika ada
-  if (document.activeElement instanceof HTMLElement) {
-    document.activeElement.blur();
-  }
-  
-  // Kembalikan fokus ke jendela utama browser
-  window.focus();
-
-  // Beri jeda 200ms agar browser siap membuka dialog cetak
-  setTimeout(() => {
-    window.print();
-  }, 200);
-};
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    window.focus();
+    setTimeout(() => {
+      window.print();
+    }, 200);
+  };
 
   const isPdfUrl = (url: string | null) => {
     if (!url) return false;
     return url.toLowerCase().includes('.pdf');
-  };
-
-  const getPdfViewUrl = (url: string) => {
-    const baseUrl = url.split('#')[0];
-    return `${baseUrl}#toolbar=0&navpanes=0&scrollbar=0&view=Fit`; 
   };
 
   const renderStatusBadge = (status?: string) => {
@@ -1054,48 +1045,50 @@ export const MCUResultDetail = () => {
                 </div>
               </div>
 
-              {/* HALAMAN LAMPIRAN 1: HASIL LABORATORIUM (Menggunakan struktur Image 100% Fit) */}
+              {/* HALAMAN LAMPIRAN 1: HASIL LABORATORIUM (PDF Multi-Halaman / Gambar) */}
               {labFileUrl && (
-                <div className="print-attachment-page">
-                  <div className="font-bold text-xs bg-gray-200 p-2 border border-black uppercase flex items-center justify-between">
-                    <span className="flex items-center gap-1.5"><FlaskConical className="w-4 h-4" /> Lampiran I: Hasil Pemeriksaan Laboratorium</span>
-                    <span className="text-[10px] text-gray-600 font-normal">Pasien: {patient.fullName} ({patient.mcuNumber})</span>
-                  </div>
-                  
-                  <div className="attachment-container border border-black border-t-0 bg-white flex justify-center items-center">
-                    {isPdfUrl(labFileUrl) ? (
-                      <embed 
-                        src={getPdfViewUrl(labFileUrl)} 
-                        type="application/pdf"
-                        className="attachment-frame"
-                      />
-                    ) : (
+                isPdfUrl(labFileUrl) ? (
+                  <PdfAttachmentRenderer
+                    pdfUrl={labFileUrl}
+                    title="Lampiran I: Hasil Pemeriksaan Laboratorium"
+                    patientName={patient.fullName}
+                    mcuNumber={patient.mcuNumber || '-'} 
+                  />
+                ) : (
+                  <div className="print-attachment-page">
+                    <div className="font-bold text-xs bg-gray-200 p-2 border border-black uppercase flex items-center justify-between">
+                      <span className="flex items-center gap-1.5"><FlaskConical className="w-4 h-4" /> Lampiran I: Hasil Pemeriksaan Laboratorium</span>
+                      <span className="text-[10px] text-gray-600 font-normal">Pasien: {patient.fullName} ({patient.mcuNumber})</span>
+                    </div>
+                    
+                    <div className="attachment-container border border-black border-t-0 bg-white flex justify-center items-center">
                       <img src={labFileUrl} alt="Hasil Laboratorium" className="attachment-img" />
-                    )}
+                    </div>
                   </div>
-                </div>
+                )
               )}
 
-              {/* HALAMAN LAMPIRAN 2: HASIL RADIOLOGI / RONTGEN (Menggunakan struktur Image 100% Fit) */}
+              {/* HALAMAN LAMPIRAN 2: HASIL RADIOLOGI / RONTGEN (PDF Multi-Halaman / Gambar) */}
               {radiologyFileUrl && (
-                <div className="print-attachment-page">
-                  <div className="font-bold text-xs bg-gray-200 p-2 border border-black uppercase flex items-center justify-between">
-                    <span className="flex items-center gap-1.5"><Scan className="w-4 h-4" /> Lampiran II: Hasil Pemeriksaan Radiologi / Rontgen</span>
-                    <span className="text-[10px] text-gray-600 font-normal">Pasien: {patient.fullName} ({patient.mcuNumber})</span>
-                  </div>
-                  
-                  <div className="attachment-container border border-black border-t-0 bg-white flex justify-center items-center">
-                    {isPdfUrl(radiologyFileUrl) ? (
-                      <embed 
-                        src={getPdfViewUrl(radiologyFileUrl)} 
-                        type="application/pdf"
-                        className="attachment-frame"
-                      />
-                    ) : (
+                isPdfUrl(radiologyFileUrl) ? (
+                  <PdfAttachmentRenderer
+                    pdfUrl={radiologyFileUrl}
+                    title="Lampiran II: Hasil Pemeriksaan Radiologi / Rontgen"
+                    patientName={patient.fullName}
+                    mcuNumber={patient.mcuNumber || '-'} 
+                  />
+                ) : (
+                  <div className="print-attachment-page">
+                    <div className="font-bold text-xs bg-gray-200 p-2 border border-black uppercase flex items-center justify-between">
+                      <span className="flex items-center gap-1.5"><Scan className="w-4 h-4" /> Lampiran II: Hasil Pemeriksaan Radiologi / Rontgen</span>
+                      <span className="text-[10px] text-gray-600 font-normal">Pasien: {patient.fullName} ({patient.mcuNumber})</span>
+                    </div>
+                    
+                    <div className="attachment-container border border-black border-t-0 bg-white flex justify-center items-center">
                       <img src={radiologyFileUrl} alt="Hasil Radiologi" className="attachment-img" />
-                    )}
+                    </div>
                   </div>
-                </div>
+                )
               )}
 
             </div>
