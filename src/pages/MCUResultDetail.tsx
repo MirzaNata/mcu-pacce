@@ -165,8 +165,19 @@ export const MCUResultDetail = () => {
   const docAny = (mcuData.doctorConclusion || {}) as unknown as Record<string, unknown>;
 
   const handlePrint = () => {
+  // Lepas fokus dari elemen embed/iframe lampiran jika ada
+  if (document.activeElement instanceof HTMLElement) {
+    document.activeElement.blur();
+  }
+  
+  // Kembalikan fokus ke jendela utama browser
+  window.focus();
+
+  // Beri jeda 200ms agar browser siap membuka dialog cetak
+  setTimeout(() => {
     window.print();
-  };
+  }, 200);
+};
 
   const isPdfUrl = (url: string | null) => {
     if (!url) return false;
@@ -624,8 +635,9 @@ export const MCUResultDetail = () => {
               
               <div className="flex flex-wrap items-center gap-2">
                 <button
+                  type="button"
                   onClick={handlePrint}
-                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer"
+                  className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer active:scale-95"
                 >
                   <Printer className="w-4 h-4" /> Cetak / Simpan PDF
                 </button>
