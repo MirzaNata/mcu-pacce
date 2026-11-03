@@ -19,7 +19,9 @@ import {
   Coffee,
   Eye as VisionIcon,
   FlaskConical,
-  Scan
+  Scan,
+  ExternalLink,
+  FileText
 } from 'lucide-react';
 import { mcuService } from '../services/mcuService';
 import { patientService } from '../services/patientService';
@@ -168,9 +170,9 @@ export const MCUResultDetail = () => {
     window.print();
   };
 
-  const getPdfViewUrl = (url: string) => {
-    const baseUrl = url.split('#')[0];
-    return `${baseUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`;
+  const isPdfUrl = (url: string | null) => {
+    if (!url) return false;
+    return url.toLowerCase().includes('.pdf');
   };
 
   const renderStatusBadge = (status?: string) => {
@@ -589,7 +591,7 @@ export const MCUResultDetail = () => {
                   <img 
                     src={String(docAny.doctorSignature)} 
                     alt="Tanda Tangan Dokter" 
-                    style={{ maxWidth: '160px', height: '64px' }}
+                    style={{ maxHeight: '64px', width: 'auto' }}
                     className="h-16 w-auto object-contain" 
                   />
                 </div>
@@ -611,12 +613,35 @@ export const MCUResultDetail = () => {
         <div className="fixed inset-0 z-50 bg-black/70 flex items-start justify-center p-4 overflow-y-auto print:p-0 print:bg-white print:static">
           <div className="bg-white rounded-2xl max-w-4xl w-full my-6 p-8 shadow-2xl relative space-y-6 print:m-0 print:p-0 print:shadow-none print:w-full text-black">
             
-            <div className="flex items-center justify-between border-b pb-4 print:hidden">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b pb-4 print:hidden">
               <div className="flex items-center gap-2">
                 <Printer className="w-5 h-5 text-blue-600" />
                 <h2 className="text-base font-bold text-gray-900">Preview Laporan MCU Resmi (Standar Perusahaan)</h2>
               </div>
-              <div className="flex items-center gap-3">
+              
+              <div className="flex flex-wrap items-center gap-2">
+                {/* TOMBOL CETAK PDF SEPARATE KHUSUS LAMPIRAN JIKA FILE ADALAH PDF */}
+                {labFileUrl && isPdfUrl(labFileUrl) && (
+                  <a
+                    href={labFileUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold text-xs rounded-lg border border-emerald-200 transition-colors"
+                  >
+                    <FileText className="w-3.5 h-3.5" /> PDF Lab <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
+                {radiologyFileUrl && isPdfUrl(radiologyFileUrl) && (
+                  <a
+                    href={radiologyFileUrl}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-700 hover:bg-purple-100 font-bold text-xs rounded-lg border border-purple-200 transition-colors"
+                  >
+                    <FileText className="w-3.5 h-3.5" /> PDF Rad <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
+
                 <button
                   onClick={handlePrint}
                   className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer"
@@ -1043,17 +1068,22 @@ export const MCUResultDetail = () => {
                     <span className="flex items-center gap-1.5"><FlaskConical className="w-4 h-4" /> Lampiran I: Hasil Pemeriksaan Laboratorium</span>
                     <span className="text-[10px] text-gray-600 font-normal">Pasien: {patient.fullName} ({patient.mcuNumber})</span>
                   </div>
-                  <div className="w-full flex justify-center items-center overflow-hidden bg-white">
-                    {labFileUrl.toLowerCase().includes('.pdf') ? (
-                      <iframe 
-                        src={getPdfViewUrl(labFileUrl)} 
-                        className="pdf-attachment-frame w-full border-none bg-white"
-                        title="Hasil Laboratorium"
-                      />
-                    ) : (
+                  
+                  {isPdfUrl(labFileUrl) ? (
+                    <div className="border border-black p-4 rounded bg-gray-50 text-center space-y-2 my-2">
+                      <p className="font-bold text-xs">Dokumen Hasil Laboratorium Tersimpan Resmi (Format PDF Digital)</p>
+                      <p className="text-[11px] text-gray-600">Berkas terverifikasi di server Supabase Klinik Pakisaji Cardiovascular Center.</p>
+                      <div className="print:hidden pt-1">
+                        <a href={labFileUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-blue-600 underline font-semibold text-xs">
+                          <ExternalLink className="w-3.5 h-3.5" /> Klik Untuk Membuka & Mencetak Berkas PDF Laboratorium
+                        </a>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="w-full flex justify-center items-center overflow-hidden bg-white">
                       <img src={labFileUrl} alt="Hasil Laboratorium" className="attachment-img border-none" />
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1064,17 +1094,22 @@ export const MCUResultDetail = () => {
                     <span className="flex items-center gap-1.5"><Scan className="w-4 h-4" /> Lampiran II: Hasil Pemeriksaan Radiologi / Rontgen</span>
                     <span className="text-[10px] text-gray-600 font-normal">Pasien: {patient.fullName} ({patient.mcuNumber})</span>
                   </div>
-                  <div className="w-full flex justify-center items-center overflow-hidden bg-white">
-                    {radiologyFileUrl.toLowerCase().includes('.pdf') ? (
-                      <iframe 
-                        src={getPdfViewUrl(radiologyFileUrl)} 
-                        className="pdf-attachment-frame w-full border-none bg-white"
-                        title="Hasil Radiologi"
-                      />
-                    ) : (
+                  
+                  {isPdfUrl(radiologyFileUrl) ? (
+                    <div className="border border-black p-4 rounded bg-gray-50 text-center space-y-2 my-2">
+                      <p className="font-bold text-xs">Dokumen Hasil Radiologi / Rontgen Tersimpan Resmi (Format PDF Digital)</p>
+                      <p className="text-[11px] text-gray-600">Berkas terverifikasi di server Supabase Klinik Pakisaji Cardiovascular Center.</p>
+                      <div className="print:hidden pt-1">
+                        <a href={radiologyFileUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-blue-600 underline font-semibold text-xs">
+                          <ExternalLink className="w-3.5 h-3.5" /> Klik Untuk Membuka & Mencetak Berkas PDF Radiologi
+                        </a>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="w-full flex justify-center items-center overflow-hidden bg-white">
                       <img src={radiologyFileUrl} alt="Hasil Radiologi" className="attachment-img border-none" />
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -1120,12 +1155,6 @@ export const MCUResultDetail = () => {
             page-break-inside: avoid !important;
             width: 100% !important;
             display: block !important;
-          }
-          .pdf-attachment-frame {
-            width: 100% !important;
-            height: 270mm !important;
-            border: none !important;
-            background-color: white !important;
           }
           .attachment-img {
             width: 100% !important;
