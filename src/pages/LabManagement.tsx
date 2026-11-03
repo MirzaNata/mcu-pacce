@@ -20,10 +20,10 @@ export const LabManagement = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState<string>('');
   
-  // State untuk modal upload PDF
+  // State untuk modal upload
   const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
   const [uploading, setUploading] = useState<boolean>(false);
-  const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [uploadError, setUploadError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -31,74 +31,76 @@ export const LabManagement = () => {
   }, []);
 
   const loadData = async () => {
-  try {
-    setLoading(true);
-    const patientList = await patientService.getPatients();
-    setPatients(patientList);
+    try {
+      setLoading(true);
+      const patientList = await patientService.getPatients();
+      setPatients(patientList);
 
-    // Eksekusi pengambilan berkas lab secara paralel
-    const filePromises = patientList.map(async (p) => {
-      if (!p.id) return null;
-      const fileUrl = await labService.getLabDocumentUrl(p.id);
-      return { id: p.id, fileUrl };
-    });
+      // Eksekusi pengambilan berkas lab secara paralel
+      const filePromises = patientList.map(async (p) => {
+        if (!p.id) return null;
+        const fileUrl = await labService.getLabDocumentUrl(p.id);
+        return { id: p.id, fileUrl };
+      });
 
-    const fileResults = await Promise.all(filePromises);
+      const fileResults = await Promise.all(filePromises);
 
-    const filesMap: Record<string, string> = {};
-    fileResults.forEach((item) => {
-      if (item && item.fileUrl) {
-        filesMap[item.id] = item.fileUrl;
-      }
-    });
+      const filesMap: Record<string, string> = {};
+      fileResults.forEach((item) => {
+        if (item && item.fileUrl) {
+          filesMap[item.id] = item.fileUrl;
+        }
+      });
 
-    setLabFiles(filesMap);
-  } catch (err) {
-    console.error('Gagal memuat data laboratorium:', err);
-  } finally {
-    setLoading(false);
-  }
-};
+      setLabFiles(filesMap);
+    } catch (err) {
+      console.error('Gagal memuat data laboratorium:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleOpenUploadModal = (patient: Patient) => {
     setSelectedPatient(patient);
-    setPdfFile(null);
+    setUploadedFile(null);
     setUploadError(null);
   };
 
   const handleCloseModal = () => {
     setSelectedPatient(null);
-    setPdfFile(null);
+    setUploadedFile(null);
     setUploadError(null);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      if (file.type !== 'application/pdf') {
-        setUploadError('Format file harus berupa PDF (.pdf)');
-        setPdfFile(null);
+      // Izinkan PDF dan Gambar (JPG, PNG, JPEG, WEBP)
+      const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+      if (!allowedTypes.includes(file.type)) {
+        setUploadError('Format file harus berupa Gambar (.jpg, .png) atau PDF (.pdf)');
+        setUploadedFile(null);
         return;
       }
-      if (file.size > 10 * 1024 * 1024) { // Max 10MB
-        setUploadError('Ukuran file maksimal adalah 10MB');
-        setPdfFile(null);
+      if (file.size > 15 * 1024 * 1024) { // Max 15MB
+        setUploadError('Ukuran file maksimal adalah 15MB');
+        setUploadedFile(null);
         return;
       }
       setUploadError(null);
-      setPdfFile(file);
+      setUploadedFile(file);
     }
   };
 
   const handleUploadSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedPatient?.id || !pdfFile) return;
+    if (!selectedPatient?.id || !uploadedFile) return;
 
     try {
       setUploading(true);
       setUploadError(null);
 
-      const fileUrl = await labService.uploadLabDocument(selectedPatient.id, pdfFile);
+      const fileUrl = await labService.uploadLabDocument(selectedPatient.id, uploadedFile);
       
       // Update state lokal
       setLabFiles((prev) => ({
@@ -107,17 +109,17 @@ export const LabManagement = () => {
       }));
 
       handleCloseModal();
-      alert('Berkas PDF hasil laboratorium berhasil diunggah!');
+      alert('Berkas hasil Laboratorium berhasil diunggah!');
     } catch (err: any) {
-      console.error('Gagal mengunggah PDF lab:', err);
-      setUploadError(err?.message || 'Gagal mengunggah berkas PDF laboratorium');
+      console.error('Gagal mengunggah berkas laboratorium:', err);
+      setUploadError(err?.message || 'Gagal mengunggah berkas hasil laboratorium');
     } finally {
       setUploading(false);
     }
   };
 
   const handleDeleteFile = async (patientId: string) => {
-    if (confirm('Apakah Anda yakin ingin menghapus berkas PDF hasil laboratorium ini?')) {
+    if (confirm('Apakah Anda yakin ingin menghapus berkas hasil laboratorium ini?')) {
       try {
         await labService.deleteLabDocument(patientId);
         setLabFiles((prev) => {
@@ -150,7 +152,7 @@ export const LabManagement = () => {
           Pemeriksaan Penunjang & Laboratorium
         </h1>
         <p className="text-xs text-gray-500 font-medium mt-1">
-          Pengelolaan berkas PDF hasil pemeriksaan laboratorium pasien
+          Pengelolaan berkas foto hasil cetak atau PDF laboratorium peserta MCU
         </p>
       </div>
 
@@ -168,7 +170,7 @@ export const LabManagement = () => {
         </div>
       </div>
 
-      {/* Tabel Peserta & Status Upload PDF */}
+      {/* Tabel Peserta & Status Upload */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-xs overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs border-collapse">
@@ -195,8 +197,8 @@ export const LabManagement = () => {
                 </tr>
               ) : (
                 filteredPatients.map((p) => {
-                  const hasPdf = Boolean(p.id && labFiles[p.id]);
-                  const pdfUrl = p.id ? labFiles[p.id] : null;
+                  const hasFile = Boolean(p.id && labFiles[p.id]);
+                  const fileUrl = p.id ? labFiles[p.id] : null;
 
                   return (
                     <tr key={p.id} className="hover:bg-gray-50/70 transition-colors">
@@ -210,36 +212,36 @@ export const LabManagement = () => {
                         {p.company || p.companyName || '-'}
                       </td>
                       <td className="p-3.5 text-center">
-                        {hasPdf ? (
+                        {hasFile ? (
                           <span className="inline-flex items-center gap-1 px-3 py-1 bg-green-50 text-green-700 font-bold text-[11px] rounded-lg border border-green-200">
                             <CheckCircle className="w-3.5 h-3.5 text-green-600" />
-                            PDF Terunggah
+                            Berkas Terunggah
                           </span>
                         ) : (
                           <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 text-gray-500 font-medium text-[11px] rounded-lg">
-                            Belum Ada PDF
+                            Belum Ada Berkas
                           </span>
                         )}
                       </td>
                       <td className="p-3.5 text-center">
                         <div className="flex items-center justify-center gap-2">
-                          {hasPdf && pdfUrl ? (
+                          {hasFile && fileUrl ? (
                             <>
                               <a
-                                href={pdfUrl}
+                                href={fileUrl}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="p-2 bg-blue-50 text-blue-600 hover:bg-blue-100 rounded-xl transition-all font-bold text-xs inline-flex items-center gap-1.5"
-                                title="Lihat Berkas PDF Hasil Lab"
+                                title="Lihat Berkas Lab"
                               >
                                 <Eye className="w-4 h-4" />
-                                <span>Lihat PDF</span>
+                                <span>Lihat Berkas</span>
                               </a>
                               <button
                                 type="button"
                                 onClick={() => handleOpenUploadModal(p)}
                                 className="p-2 bg-gray-100 text-gray-700 hover:bg-gray-200 rounded-xl transition-all font-bold text-xs inline-flex items-center gap-1.5 cursor-pointer"
-                                title="Ganti PDF"
+                                title="Ganti Berkas"
                               >
                                 <Upload className="w-4 h-4" />
                                 <span>Ganti</span>
@@ -248,7 +250,7 @@ export const LabManagement = () => {
                                 type="button"
                                 onClick={() => p.id && handleDeleteFile(p.id)}
                                 className="p-2 text-red-500 hover:bg-red-50 rounded-xl transition-all cursor-pointer"
-                                title="Hapus PDF"
+                                title="Hapus Berkas"
                               >
                                 <Trash2 className="w-4 h-4" />
                               </button>
@@ -260,7 +262,7 @@ export const LabManagement = () => {
                               className="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer inline-flex items-center gap-1.5"
                             >
                               <Upload className="w-4 h-4" />
-                              <span>Upload PDF Lab</span>
+                              <span>Upload Lab</span>
                             </button>
                           )}
                         </div>
@@ -274,13 +276,13 @@ export const LabManagement = () => {
         </div>
       </div>
 
-      {/* MODAL UPLOAD PDF */}
+      {/* MODAL UPLOAD LABORATORIUM */}
       {selectedPatient && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="bg-white w-full max-w-md rounded-2xl p-6 shadow-xl space-y-5 animate-fade-in">
             <div className="flex items-center justify-between border-b pb-3">
               <div>
-                <h3 className="font-bold text-gray-900 text-sm">Upload Hasil Laboratorium (PDF)</h3>
+                <h3 className="font-bold text-gray-900 text-sm">Upload Berkas Hasil Laboratorium</h3>
                 <p className="text-xs text-gray-500 mt-0.5">
                   {selectedPatient.fullName} ({selectedPatient.mcuNumber || '-'})
                 </p>
@@ -297,17 +299,17 @@ export const LabManagement = () => {
             <form onSubmit={handleUploadSubmit} className="space-y-4">
               <div>
                 <label className="block text-xs font-bold text-gray-700 mb-2">
-                  Pilih Berkas PDF Hasil Lab
+                  Pilih Berkas Foto atau PDF Hasil Laboratorium
                 </label>
                 <label className="flex flex-col items-center justify-center p-6 border-2 border-dashed border-gray-300 hover:border-blue-500 bg-gray-50 hover:bg-blue-50/30 rounded-2xl transition-all cursor-pointer">
                   <FileText className="w-8 h-8 text-blue-600 mb-2" />
                   <span className="text-xs font-bold text-gray-700 text-center">
-                    {pdfFile ? pdfFile.name : 'Klik untuk memilih berkas PDF'}
+                    {uploadedFile ? uploadedFile.name : 'Klik untuk memilih berkas'}
                   </span>
-                  <span className="text-[10px] text-gray-400 mt-1">Format PDF, maksimal 10MB</span>
+                  <span className="text-[10px] text-gray-400 mt-1">Format JPG / PNG / PDF (Maks. 15MB)</span>
                   <input
                     type="file"
-                    accept="application/pdf"
+                    accept="application/pdf,image/png,image/jpeg,image/jpg,image/webp"
                     onChange={handleFileChange}
                     className="hidden"
                   />
@@ -331,11 +333,11 @@ export const LabManagement = () => {
                 </button>
                 <button
                   type="submit"
-                  disabled={!pdfFile || uploading}
+                  disabled={!uploadedFile || uploading}
                   className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer inline-flex items-center gap-1.5"
                 >
                   <Upload className="w-4 h-4" />
-                  <span>{uploading ? 'Mengunggah...' : 'Simpan PDF'}</span>
+                  <span>{uploading ? 'Mengunggah...' : 'Simpan Berkas'}</span>
                 </button>
               </div>
             </form>
