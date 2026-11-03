@@ -173,10 +173,10 @@ export const MCUResultDetail = () => {
     return url.toLowerCase().includes('.pdf');
   };
 
-  // Menggunakan view=Fit agar dokumen PDF muat 100% di dalam kontainer A4 tanpa terpotong
+  // MENGGUNAKAN view=FitH AGAR PDF MEMENUHI LEBAR IFRAME 100% DAN TIDAK TERPOTONG/HITAM DI KIRI
   const getPdfViewUrl = (url: string) => {
     const baseUrl = url.split('#')[0];
-    return `${baseUrl}#toolbar=0&navpanes=0&scrollbar=0&view=Fit`; 
+    return `${baseUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`; 
   };
 
   const renderStatusBadge = (status?: string) => {
@@ -1043,7 +1043,7 @@ export const MCUResultDetail = () => {
                 </div>
               </div>
 
-              {/* HALAMAN LAMPIRAN 1: HASIL LABORATORIUM (Memaksa Halaman Baru Seukuran A4) */}
+              {/* HALAMAN LAMPIRAN 1: HASIL LABORATORIUM */}
               {labFileUrl && (
                 <div className="print-attachment-page">
                   <div className="font-bold text-xs bg-gray-200 p-2 border border-black uppercase flex items-center justify-between">
@@ -1065,7 +1065,7 @@ export const MCUResultDetail = () => {
                 </div>
               )}
 
-              {/* HALAMAN LAMPIRAN 2: HASIL RADIOLOGI / RONTGEN (Memaksa Halaman Baru Seukuran A4) */}
+              {/* HALAMAN LAMPIRAN 2: HASIL RADIOLOGI / RONTGEN */}
               {radiologyFileUrl && (
                 <div className="print-attachment-page">
                   <div className="font-bold text-xs bg-gray-200 p-2 border border-black uppercase flex items-center justify-between">
@@ -1153,7 +1153,7 @@ export const MCUResultDetail = () => {
             page-break-before: always !important;
             break-inside: avoid !important;
             page-break-inside: avoid !important;
-            height: 270mm !important; /* Total tinggi A4 dikurangi margin */
+            min-height: 270mm !important; /* Total tinggi A4 dikurangi margin */
             width: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
@@ -1163,7 +1163,7 @@ export const MCUResultDetail = () => {
           }
           .attachment-container {
             flex-grow: 1 !important;
-            height: 260mm !important; /* Tinggi sisa setelah judul */
+            height: 265mm !important; /* Tinggi sisa setelah judul */
             width: 100% !important;
             border: none !important;
             padding: 0 !important;
@@ -1177,7 +1177,7 @@ export const MCUResultDetail = () => {
           .attachment-img {
             width: 100% !important;
             height: 100% !important;
-            max-height: 260mm !important;
+            max-height: 265mm !important;
             object-fit: contain !important;
           }
         }
