@@ -589,7 +589,7 @@ export const MCUResultDetail = () => {
                   <img 
                     src={String(docAny.doctorSignature)} 
                     alt="Tanda Tangan Dokter" 
-                    style={{ maxWidth: '160px' }}
+                    style={{ maxWidth: '160px', height: '64px' }}
                     className="h-16 w-auto object-contain" 
                   />
                 </div>
@@ -641,6 +641,7 @@ export const MCUResultDetail = () => {
                   <img 
                     src="/logonew.png" 
                     alt="Logo Klinik" 
+                    style={{ height: '48px', width: 'auto' }}
                     className="h-12 w-auto object-contain shrink-0" 
                     onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }}
                   />
@@ -1017,7 +1018,12 @@ export const MCUResultDetail = () => {
                     <p className="text-[11px] text-gray-600">Dokter Pemeriksa / Examining Physician,</p>
                     <div className="h-16 flex items-center justify-center my-1">
                       {docAny.doctorSignature ? (
-                        <img src={String(docAny.doctorSignature)} alt="Tanda Tangan Dokter" className="max-h-16 object-contain" />
+                        <img 
+                          src={String(docAny.doctorSignature)} 
+                          alt="Tanda Tangan Dokter" 
+                          style={{ maxHeight: '64px', width: 'auto' }}
+                          className="h-16 w-auto object-contain" 
+                        />
                       ) : (
                         <div className="border border-dashed border-gray-300 w-full h-12 flex items-center justify-center text-[10px] text-gray-400">
                           [ Tanda Tangan Dokter ]
@@ -1045,7 +1051,7 @@ export const MCUResultDetail = () => {
                         title="Hasil Laboratorium"
                       />
                     ) : (
-                      <img src={labFileUrl} alt="Hasil Laboratorium" className="w-full h-auto object-contain border-none" />
+                      <img src={labFileUrl} alt="Hasil Laboratorium" className="attachment-img border-none" />
                     )}
                   </div>
                 </div>
@@ -1066,7 +1072,7 @@ export const MCUResultDetail = () => {
                         title="Hasil Radiologi"
                       />
                     ) : (
-                      <img src={radiologyFileUrl} alt="Hasil Radiologi" className="w-full h-auto object-contain border-none" />
+                      <img src={radiologyFileUrl} alt="Hasil Radiologi" className="attachment-img border-none" />
                     )}
                   </div>
                 </div>
@@ -1077,7 +1083,7 @@ export const MCUResultDetail = () => {
         </div>
       )}
 
-      {/* CSS KHUSUS MEDIA PRINT A4 PROPOSIONAL */}
+      {/* CSS KHUSUS MEDIA PRINT A4 PRESISI */}
       <style>{`
         @media print {
           @page {
@@ -1121,9 +1127,10 @@ export const MCUResultDetail = () => {
             border: none !important;
             background-color: white !important;
           }
-          img {
+          .attachment-img {
             width: 100% !important;
             height: auto !important;
+            max-height: 250mm !important;
             object-fit: contain !important;
           }
         }
