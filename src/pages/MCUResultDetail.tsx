@@ -168,6 +168,11 @@ export const MCUResultDetail = () => {
     window.print();
   };
 
+  const getPdfViewUrl = (url: string) => {
+    const baseUrl = url.split('#')[0];
+    return `${baseUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`;
+  };
+
   const renderStatusBadge = (status?: string) => {
     if (status === 'Normal') {
       return (
@@ -1035,8 +1040,9 @@ export const MCUResultDetail = () => {
                   <div className="w-full flex justify-center overflow-hidden">
                     {labFileUrl.toLowerCase().endsWith('.pdf') ? (
                       <iframe 
-                        src={labFileUrl.includes('#') ? labFileUrl : `${labFileUrl}#toolbar=0&navpanes=0&scrollbar=0`} 
+                        src={getPdfViewUrl(labFileUrl)} 
                         className="w-full h-237.5 border-none"
+                        style={{ width: '100%', height: '1000px' }}
                         title="Berkas PDF Hasil Laboratorium"
                       />
                     ) : (
@@ -1056,8 +1062,9 @@ export const MCUResultDetail = () => {
                   <div className="w-full flex justify-center overflow-hidden">
                     {radiologyFileUrl.toLowerCase().endsWith('.pdf') ? (
                       <iframe 
-                        src={radiologyFileUrl.includes('#') ? radiologyFileUrl : `${radiologyFileUrl}#toolbar=0&navpanes=0&scrollbar=0`} 
+                        src={getPdfViewUrl(radiologyFileUrl)} 
                         className="w-full h-237.5 border-none"
+                        style={{ width: '100%', height: '1000px' }}
                         title="Berkas PDF Hasil Radiologi"
                       />
                     ) : (
@@ -1090,6 +1097,7 @@ export const MCUResultDetail = () => {
           iframe {
             border: none !important;
             outline: none !important;
+            width: 100% !important;
           }
           .fixed {
             position: static !important;
