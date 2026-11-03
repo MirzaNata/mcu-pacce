@@ -170,7 +170,7 @@ export const MCUResultDetail = () => {
 
   const getPdfViewUrl = (url: string) => {
     const baseUrl = url.split('#')[0];
-    return `${baseUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`;
+    return `${baseUrl}#toolbar=0&navpanes=0&scrollbar=0&view=Fit`;
   };
 
   const renderStatusBadge = (status?: string) => {
@@ -1032,21 +1032,20 @@ export const MCUResultDetail = () => {
 
               {/* HALAMAN LAMPIRAN 1: HASIL LABORATORIUM */}
               {labFileUrl && (
-                <div className="print:break-before-always pt-6 border-t-2 border-black space-y-3">
+                <div className="print-attachment-page pt-4 space-y-2">
                   <div className="font-bold text-xs bg-gray-200 p-2 border border-black uppercase flex items-center justify-between">
                     <span className="flex items-center gap-1.5"><FlaskConical className="w-4 h-4" /> Lampiran I: Hasil Pemeriksaan Laboratorium</span>
                     <span className="text-[10px] text-gray-600 font-normal">Pasien: {patient.fullName} ({patient.mcuNumber})</span>
                   </div>
-                  <div className="w-full flex justify-center overflow-hidden">
-                    {labFileUrl.toLowerCase().endsWith('.pdf') ? (
+                  <div className="w-full flex justify-center items-center overflow-hidden">
+                    {labFileUrl.toLowerCase().includes('.pdf') ? (
                       <iframe 
                         src={getPdfViewUrl(labFileUrl)} 
-                        className="w-full h-237.5 border-none"
-                        style={{ width: '100%', height: '1000px' }}
-                        title="Berkas PDF Hasil Laboratorium"
+                        className="pdf-attachment-frame w-full border-none"
+                        title="Hasil Laboratorium"
                       />
                     ) : (
-                      <img src={labFileUrl} alt="Hasil Laboratorium" className="w-full h-auto object-contain border-none" />
+                      <img src={labFileUrl} alt="Hasil Laboratorium" className="max-w-full max-h-[250mm] object-contain border-none" />
                     )}
                   </div>
                 </div>
@@ -1054,21 +1053,20 @@ export const MCUResultDetail = () => {
 
               {/* HALAMAN LAMPIRAN 2: HASIL RADIOLOGI / RONTGEN */}
               {radiologyFileUrl && (
-                <div className="print:break-before-always pt-6 border-t-2 border-black space-y-3">
+                <div className="print-attachment-page pt-4 space-y-2">
                   <div className="font-bold text-xs bg-gray-200 p-2 border border-black uppercase flex items-center justify-between">
                     <span className="flex items-center gap-1.5"><Scan className="w-4 h-4" /> Lampiran II: Hasil Pemeriksaan Radiologi / Rontgen</span>
                     <span className="text-[10px] text-gray-600 font-normal">Pasien: {patient.fullName} ({patient.mcuNumber})</span>
                   </div>
-                  <div className="w-full flex justify-center overflow-hidden">
-                    {radiologyFileUrl.toLowerCase().endsWith('.pdf') ? (
+                  <div className="w-full flex justify-center items-center overflow-hidden">
+                    {radiologyFileUrl.toLowerCase().includes('.pdf') ? (
                       <iframe 
                         src={getPdfViewUrl(radiologyFileUrl)} 
-                        className="w-full h-237.5 border-none"
-                        style={{ width: '100%', height: '1000px' }}
-                        title="Berkas PDF Hasil Radiologi"
+                        className="pdf-attachment-frame w-full border-none"
+                        title="Hasil Radiologi"
                       />
                     ) : (
-                      <img src={radiologyFileUrl} alt="Hasil Radiologi" className="w-full h-auto object-contain border-none" />
+                      <img src={radiologyFileUrl} alt="Hasil Radiologi" className="max-w-full max-h-[250mm] object-contain border-none" />
                     )}
                   </div>
                 </div>
@@ -1079,12 +1077,12 @@ export const MCUResultDetail = () => {
         </div>
       )}
 
-      {/* CSS KHUSUS MEDIA PRINT A4 */}
+      {/* CSS KHUSUS MEDIA PRINT A4 PROPOSIONAL */}
       <style>{`
         @media print {
           @page {
             size: A4 portrait;
-            margin: 10mm;
+            margin: 8mm;
           }
           aside, nav, header, .print\\:hidden {
             display: none !important;
@@ -1093,11 +1091,6 @@ export const MCUResultDetail = () => {
             background-color: white !important;
             color: black !important;
             overflow: visible !important;
-          }
-          iframe {
-            border: none !important;
-            outline: none !important;
-            width: 100% !important;
           }
           .fixed {
             position: static !important;
@@ -1113,6 +1106,24 @@ export const MCUResultDetail = () => {
             padding: 0 !important;
             box-shadow: none !important;
             border: none !important;
+          }
+          .print-attachment-page {
+            break-before: page !important;
+            page-break-before: always !important;
+            break-inside: avoid !important;
+            page-break-inside: avoid !important;
+            max-height: 270mm !important;
+            display: flex !important;
+            flex-direction: column !important;
+          }
+          .pdf-attachment-frame {
+            width: 100% !important;
+            height: 250mm !important;
+            border: none !important;
+          }
+          img {
+            max-height: 250mm !important;
+            object-fit: contain !important;
           }
         }
       `}</style>
