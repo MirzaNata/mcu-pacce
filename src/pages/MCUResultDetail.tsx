@@ -19,9 +19,7 @@ import {
   Coffee,
   Eye as VisionIcon,
   FlaskConical,
-  Scan,
-  ExternalLink,
-  FileText
+  Scan
 } from 'lucide-react';
 import { mcuService } from '../services/mcuService';
 import { patientService } from '../services/patientService';
@@ -173,6 +171,12 @@ export const MCUResultDetail = () => {
   const isPdfUrl = (url: string | null) => {
     if (!url) return false;
     return url.toLowerCase().includes('.pdf');
+  };
+
+  // Menggunakan view=Fit agar dokumen PDF muat 100% di dalam kontainer A4 tanpa terpotong
+  const getPdfViewUrl = (url: string) => {
+    const baseUrl = url.split('#')[0];
+    return `${baseUrl}#toolbar=0&navpanes=0&scrollbar=0&view=Fit`; 
   };
 
   const renderStatusBadge = (status?: string) => {
@@ -620,28 +624,6 @@ export const MCUResultDetail = () => {
               </div>
               
               <div className="flex flex-wrap items-center gap-2">
-                {/* TOMBOL CETAK PDF SEPARATE KHUSUS LAMPIRAN JIKA FILE ADALAH PDF */}
-                {labFileUrl && isPdfUrl(labFileUrl) && (
-                  <a
-                    href={labFileUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-100 font-bold text-xs rounded-lg border border-emerald-200 transition-colors"
-                  >
-                    <FileText className="w-3.5 h-3.5" /> PDF Lab <ExternalLink className="w-3 h-3" />
-                  </a>
-                )}
-                {radiologyFileUrl && isPdfUrl(radiologyFileUrl) && (
-                  <a
-                    href={radiologyFileUrl}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="flex items-center gap-1.5 px-3 py-1.5 bg-purple-50 text-purple-700 hover:bg-purple-100 font-bold text-xs rounded-lg border border-purple-200 transition-colors"
-                  >
-                    <FileText className="w-3.5 h-3.5" /> PDF Rad <ExternalLink className="w-3 h-3" />
-                  </a>
-                )}
-
                 <button
                   onClick={handlePrint}
                   className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer"
@@ -1061,55 +1043,47 @@ export const MCUResultDetail = () => {
                 </div>
               </div>
 
-              {/* HALAMAN LAMPIRAN 1: HASIL LABORATORIUM */}
+              {/* HALAMAN LAMPIRAN 1: HASIL LABORATORIUM (Memaksa Halaman Baru Seukuran A4) */}
               {labFileUrl && (
-                <div className="print-attachment-page pt-4 space-y-2">
+                <div className="print-attachment-page">
                   <div className="font-bold text-xs bg-gray-200 p-2 border border-black uppercase flex items-center justify-between">
                     <span className="flex items-center gap-1.5"><FlaskConical className="w-4 h-4" /> Lampiran I: Hasil Pemeriksaan Laboratorium</span>
                     <span className="text-[10px] text-gray-600 font-normal">Pasien: {patient.fullName} ({patient.mcuNumber})</span>
                   </div>
                   
-                  {isPdfUrl(labFileUrl) ? (
-                    <div className="border border-black p-4 rounded bg-gray-50 text-center space-y-2 my-2">
-                      <p className="font-bold text-xs">Dokumen Hasil Laboratorium Tersimpan Resmi (Format PDF Digital)</p>
-                      <p className="text-[11px] text-gray-600">Berkas terverifikasi di server Supabase Klinik Pakisaji Cardiovascular Center.</p>
-                      <div className="print:hidden pt-1">
-                        <a href={labFileUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-blue-600 underline font-semibold text-xs">
-                          <ExternalLink className="w-3.5 h-3.5" /> Klik Untuk Membuka & Mencetak Berkas PDF Laboratorium
-                        </a>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="w-full flex justify-center items-center overflow-hidden bg-white">
-                      <img src={labFileUrl} alt="Hasil Laboratorium" className="attachment-img border-none" />
-                    </div>
-                  )}
+                  <div className="attachment-container border border-black border-t-0 bg-white">
+                    {isPdfUrl(labFileUrl) ? (
+                      <iframe 
+                        src={getPdfViewUrl(labFileUrl)} 
+                        className="attachment-frame"
+                        title="Hasil Laboratorium"
+                      />
+                    ) : (
+                      <img src={labFileUrl} alt="Hasil Laboratorium" className="attachment-img" />
+                    )}
+                  </div>
                 </div>
               )}
 
-              {/* HALAMAN LAMPIRAN 2: HASIL RADIOLOGI / RONTGEN */}
+              {/* HALAMAN LAMPIRAN 2: HASIL RADIOLOGI / RONTGEN (Memaksa Halaman Baru Seukuran A4) */}
               {radiologyFileUrl && (
-                <div className="print-attachment-page pt-4 space-y-2">
+                <div className="print-attachment-page">
                   <div className="font-bold text-xs bg-gray-200 p-2 border border-black uppercase flex items-center justify-between">
                     <span className="flex items-center gap-1.5"><Scan className="w-4 h-4" /> Lampiran II: Hasil Pemeriksaan Radiologi / Rontgen</span>
                     <span className="text-[10px] text-gray-600 font-normal">Pasien: {patient.fullName} ({patient.mcuNumber})</span>
                   </div>
                   
-                  {isPdfUrl(radiologyFileUrl) ? (
-                    <div className="border border-black p-4 rounded bg-gray-50 text-center space-y-2 my-2">
-                      <p className="font-bold text-xs">Dokumen Hasil Radiologi / Rontgen Tersimpan Resmi (Format PDF Digital)</p>
-                      <p className="text-[11px] text-gray-600">Berkas terverifikasi di server Supabase Klinik Pakisaji Cardiovascular Center.</p>
-                      <div className="print:hidden pt-1">
-                        <a href={radiologyFileUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1.5 text-blue-600 underline font-semibold text-xs">
-                          <ExternalLink className="w-3.5 h-3.5" /> Klik Untuk Membuka & Mencetak Berkas PDF Radiologi
-                        </a>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="w-full flex justify-center items-center overflow-hidden bg-white">
-                      <img src={radiologyFileUrl} alt="Hasil Radiologi" className="attachment-img border-none" />
-                    </div>
-                  )}
+                  <div className="attachment-container border border-black border-t-0 bg-white">
+                    {isPdfUrl(radiologyFileUrl) ? (
+                      <iframe 
+                        src={getPdfViewUrl(radiologyFileUrl)} 
+                        className="attachment-frame"
+                        title="Hasil Radiologi"
+                      />
+                    ) : (
+                      <img src={radiologyFileUrl} alt="Hasil Radiologi" className="attachment-img" />
+                    )}
+                  </div>
                 </div>
               )}
 
@@ -1118,12 +1092,36 @@ export const MCUResultDetail = () => {
         </div>
       )}
 
-      {/* CSS KHUSUS MEDIA PRINT A4 PRESISI */}
+      {/* CSS KHUSUS MEDIA PRINT A4 PRESISI UNTUK MENCEGAH HALAMAN KOSONG */}
       <style>{`
+        /* Mode tampilan layar biasa */
+        .print-attachment-page {
+           margin-top: 2rem;
+        }
+        .attachment-container {
+           height: 500px;
+           width: 100%;
+           display: flex;
+           justify-content: center;
+           align-items: center;
+           overflow: hidden;
+        }
+        .attachment-frame {
+           width: 100%;
+           height: 100%;
+           border: none;
+        }
+        .attachment-img {
+           width: 100%;
+           height: 100%;
+           object-fit: contain;
+        }
+
+        /* Mode cetak presisi A4 */
         @media print {
           @page {
             size: A4 portrait;
-            margin: 8mm;
+            margin: 10mm;
           }
           aside, nav, header, .print\\:hidden {
             display: none !important;
@@ -1148,18 +1146,38 @@ export const MCUResultDetail = () => {
             box-shadow: none !important;
             border: none !important;
           }
+          
+          /* Kunci ukuran wadah agar persis mencetak 1 halaman */
           .print-attachment-page {
             break-before: page !important;
             page-break-before: always !important;
             break-inside: avoid !important;
             page-break-inside: avoid !important;
+            height: 270mm !important; /* Total tinggi A4 dikurangi margin */
             width: 100% !important;
-            display: block !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            background-color: white !important;
+          }
+          .attachment-container {
+            flex-grow: 1 !important;
+            height: 260mm !important; /* Tinggi sisa setelah judul */
+            width: 100% !important;
+            border: none !important;
+            padding: 0 !important;
+          }
+          .attachment-frame {
+            width: 100% !important;
+            height: 100% !important;
+            border: none !important;
+            background-color: white !important;
           }
           .attachment-img {
             width: 100% !important;
-            height: auto !important;
-            max-height: 250mm !important;
+            height: 100% !important;
+            max-height: 260mm !important;
             object-fit: contain !important;
           }
         }
