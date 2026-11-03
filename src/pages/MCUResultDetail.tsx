@@ -1032,15 +1032,15 @@ export const MCUResultDetail = () => {
                     <span className="flex items-center gap-1.5"><FlaskConical className="w-4 h-4" /> Lampiran I: Hasil Pemeriksaan Laboratorium</span>
                     <span className="text-[10px] text-gray-600 font-normal">Pasien: {patient.fullName} ({patient.mcuNumber})</span>
                   </div>
-                  <div className="w-full border border-black overflow-hidden bg-gray-50 flex justify-center">
+                  <div className="w-full flex justify-center overflow-hidden">
                     {labFileUrl.toLowerCase().endsWith('.pdf') ? (
                       <iframe 
-                        src={labFileUrl} 
-                        className="w-full h-200 border-none"
+                        src={labFileUrl.includes('#') ? labFileUrl : `${labFileUrl}#toolbar=0&navpanes=0&scrollbar=0`} 
+                        className="w-full h-237.5 border-none"
                         title="Berkas PDF Hasil Laboratorium"
                       />
                     ) : (
-                      <img src={labFileUrl} alt="Hasil Laboratorium" className="max-w-full h-auto object-contain" />
+                      <img src={labFileUrl} alt="Hasil Laboratorium" className="w-full h-auto object-contain border-none" />
                     )}
                   </div>
                 </div>
@@ -1053,15 +1053,15 @@ export const MCUResultDetail = () => {
                     <span className="flex items-center gap-1.5"><Scan className="w-4 h-4" /> Lampiran II: Hasil Pemeriksaan Radiologi / Rontgen</span>
                     <span className="text-[10px] text-gray-600 font-normal">Pasien: {patient.fullName} ({patient.mcuNumber})</span>
                   </div>
-                  <div className="w-full border border-black overflow-hidden bg-gray-50 flex justify-center">
+                  <div className="w-full flex justify-center overflow-hidden">
                     {radiologyFileUrl.toLowerCase().endsWith('.pdf') ? (
                       <iframe 
-                        src={radiologyFileUrl} 
-                        className="w-full h-200 border-none"
+                        src={radiologyFileUrl.includes('#') ? radiologyFileUrl : `${radiologyFileUrl}#toolbar=0&navpanes=0&scrollbar=0`} 
+                        className="w-full h-237.5 border-none"
                         title="Berkas PDF Hasil Radiologi"
                       />
                     ) : (
-                      <img src={radiologyFileUrl} alt="Hasil Radiologi" className="max-w-full h-auto object-contain" />
+                      <img src={radiologyFileUrl} alt="Hasil Radiologi" className="w-full h-auto object-contain border-none" />
                     )}
                   </div>
                 </div>
@@ -1079,7 +1079,6 @@ export const MCUResultDetail = () => {
             size: A4 portrait;
             margin: 10mm;
           }
-          /* Sembunyikan elemen navigasi utama, sidebar, dan konten di belakang modal */
           aside, nav, header, .print\\:hidden {
             display: none !important;
           }
@@ -1088,7 +1087,10 @@ export const MCUResultDetail = () => {
             color: black !important;
             overflow: visible !important;
           }
-          /* Hilangkan efek modal overlay agar mengalir secara alami di halaman A4 */
+          iframe {
+            border: none !important;
+            outline: none !important;
+          }
           .fixed {
             position: static !important;
             background: transparent !important;
