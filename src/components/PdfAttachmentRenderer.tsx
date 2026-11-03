@@ -2,7 +2,10 @@ import React, { useEffect, useState } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
 
 // Konfigurasi worker PDF.js via CDN agar tidak membebankan bundler Vite
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+pdfjsLib.GlobalWorkerOptions.workerSrc = new URL(
+  'pdfjs-dist/build/pdf.worker.mjs',
+  import.meta.url
+).toString();
 
 interface PdfAttachmentRendererProps {
   pdfUrl: string;
