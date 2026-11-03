@@ -170,7 +170,7 @@ export const MCUResultDetail = () => {
 
   const getPdfViewUrl = (url: string) => {
     const baseUrl = url.split('#')[0];
-    return `${baseUrl}#toolbar=0&navpanes=0&scrollbar=0&view=Fit`;
+    return `${baseUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`;
   };
 
   const renderStatusBadge = (status?: string) => {
@@ -1037,15 +1037,15 @@ export const MCUResultDetail = () => {
                     <span className="flex items-center gap-1.5"><FlaskConical className="w-4 h-4" /> Lampiran I: Hasil Pemeriksaan Laboratorium</span>
                     <span className="text-[10px] text-gray-600 font-normal">Pasien: {patient.fullName} ({patient.mcuNumber})</span>
                   </div>
-                  <div className="w-full flex justify-center items-center overflow-hidden">
+                  <div className="w-full flex justify-center items-center overflow-hidden bg-white">
                     {labFileUrl.toLowerCase().includes('.pdf') ? (
                       <iframe 
                         src={getPdfViewUrl(labFileUrl)} 
-                        className="pdf-attachment-frame w-full border-none"
+                        className="pdf-attachment-frame w-full border-none bg-white"
                         title="Hasil Laboratorium"
                       />
                     ) : (
-                      <img src={labFileUrl} alt="Hasil Laboratorium" className="max-w-full max-h-[250mm] object-contain border-none" />
+                      <img src={labFileUrl} alt="Hasil Laboratorium" className="w-full h-auto object-contain border-none" />
                     )}
                   </div>
                 </div>
@@ -1058,15 +1058,15 @@ export const MCUResultDetail = () => {
                     <span className="flex items-center gap-1.5"><Scan className="w-4 h-4" /> Lampiran II: Hasil Pemeriksaan Radiologi / Rontgen</span>
                     <span className="text-[10px] text-gray-600 font-normal">Pasien: {patient.fullName} ({patient.mcuNumber})</span>
                   </div>
-                  <div className="w-full flex justify-center items-center overflow-hidden">
+                  <div className="w-full flex justify-center items-center overflow-hidden bg-white">
                     {radiologyFileUrl.toLowerCase().includes('.pdf') ? (
                       <iframe 
                         src={getPdfViewUrl(radiologyFileUrl)} 
-                        className="pdf-attachment-frame w-full border-none"
+                        className="pdf-attachment-frame w-full border-none bg-white"
                         title="Hasil Radiologi"
                       />
                     ) : (
-                      <img src={radiologyFileUrl} alt="Hasil Radiologi" className="max-w-full max-h-[250mm] object-contain border-none" />
+                      <img src={radiologyFileUrl} alt="Hasil Radiologi" className="w-full h-auto object-contain border-none" />
                     )}
                   </div>
                 </div>
@@ -1112,17 +1112,18 @@ export const MCUResultDetail = () => {
             page-break-before: always !important;
             break-inside: avoid !important;
             page-break-inside: avoid !important;
-            max-height: 270mm !important;
-            display: flex !important;
-            flex-direction: column !important;
+            width: 100% !important;
+            display: block !important;
           }
           .pdf-attachment-frame {
             width: 100% !important;
-            height: 250mm !important;
+            height: 270mm !important;
             border: none !important;
+            background-color: white !important;
           }
           img {
-            max-height: 250mm !important;
+            width: 100% !important;
+            height: auto !important;
             object-fit: contain !important;
           }
         }
