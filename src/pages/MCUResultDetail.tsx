@@ -173,10 +173,9 @@ export const MCUResultDetail = () => {
     return url.toLowerCase().includes('.pdf');
   };
 
-  // MENGGUNAKAN view=FitH AGAR PDF MEMENUHI LEBAR IFRAME 100% DAN TIDAK TERPOTONG/HITAM DI KIRI
   const getPdfViewUrl = (url: string) => {
     const baseUrl = url.split('#')[0];
-    return `${baseUrl}#toolbar=0&navpanes=0&scrollbar=0&view=FitH`; 
+    return `${baseUrl}#toolbar=0&navpanes=0&scrollbar=0&view=Fit`; 
   };
 
   const renderStatusBadge = (status?: string) => {
@@ -1043,7 +1042,7 @@ export const MCUResultDetail = () => {
                 </div>
               </div>
 
-              {/* HALAMAN LAMPIRAN 1: HASIL LABORATORIUM */}
+              {/* HALAMAN LAMPIRAN 1: HASIL LABORATORIUM (Menggunakan struktur Image 100% Fit) */}
               {labFileUrl && (
                 <div className="print-attachment-page">
                   <div className="font-bold text-xs bg-gray-200 p-2 border border-black uppercase flex items-center justify-between">
@@ -1051,12 +1050,12 @@ export const MCUResultDetail = () => {
                     <span className="text-[10px] text-gray-600 font-normal">Pasien: {patient.fullName} ({patient.mcuNumber})</span>
                   </div>
                   
-                  <div className="attachment-container border border-black border-t-0 bg-white">
+                  <div className="attachment-container border border-black border-t-0 bg-white flex justify-center items-center">
                     {isPdfUrl(labFileUrl) ? (
-                      <iframe 
+                      <embed 
                         src={getPdfViewUrl(labFileUrl)} 
+                        type="application/pdf"
                         className="attachment-frame"
-                        title="Hasil Laboratorium"
                       />
                     ) : (
                       <img src={labFileUrl} alt="Hasil Laboratorium" className="attachment-img" />
@@ -1065,7 +1064,7 @@ export const MCUResultDetail = () => {
                 </div>
               )}
 
-              {/* HALAMAN LAMPIRAN 2: HASIL RADIOLOGI / RONTGEN */}
+              {/* HALAMAN LAMPIRAN 2: HASIL RADIOLOGI / RONTGEN (Menggunakan struktur Image 100% Fit) */}
               {radiologyFileUrl && (
                 <div className="print-attachment-page">
                   <div className="font-bold text-xs bg-gray-200 p-2 border border-black uppercase flex items-center justify-between">
@@ -1073,12 +1072,12 @@ export const MCUResultDetail = () => {
                     <span className="text-[10px] text-gray-600 font-normal">Pasien: {patient.fullName} ({patient.mcuNumber})</span>
                   </div>
                   
-                  <div className="attachment-container border border-black border-t-0 bg-white">
+                  <div className="attachment-container border border-black border-t-0 bg-white flex justify-center items-center">
                     {isPdfUrl(radiologyFileUrl) ? (
-                      <iframe 
+                      <embed 
                         src={getPdfViewUrl(radiologyFileUrl)} 
+                        type="application/pdf"
                         className="attachment-frame"
-                        title="Hasil Radiologi"
                       />
                     ) : (
                       <img src={radiologyFileUrl} alt="Hasil Radiologi" className="attachment-img" />
@@ -1092,9 +1091,8 @@ export const MCUResultDetail = () => {
         </div>
       )}
 
-      {/* CSS KHUSUS MEDIA PRINT A4 PRESISI UNTUK MENCEGAH HALAMAN KOSONG */}
+      {/* CSS KHUSUS MEDIA PRINT A4 PRESISI UNTUK GAMBAR (JPG/PNG) */}
       <style>{`
-        /* Mode tampilan layar biasa */
         .print-attachment-page {
            margin-top: 2rem;
         }
@@ -1105,19 +1103,22 @@ export const MCUResultDetail = () => {
            justify-content: center;
            align-items: center;
            overflow: hidden;
+           background-color: white;
         }
         .attachment-frame {
            width: 100%;
            height: 100%;
            border: none;
+           background-color: white;
         }
         .attachment-img {
            width: 100%;
            height: 100%;
            object-fit: contain;
+           background-color: white;
         }
 
-        /* Mode cetak presisi A4 */
+        /* Setelan Khusus Saat Dicetak ke PDF / Kertas */
         @media print {
           @page {
             size: A4 portrait;
@@ -1147,13 +1148,13 @@ export const MCUResultDetail = () => {
             border: none !important;
           }
           
-          /* Kunci ukuran wadah agar persis mencetak 1 halaman */
+          /* Penguncian Kontainer Lampiran */
           .print-attachment-page {
             break-before: page !important;
             page-break-before: always !important;
             break-inside: avoid !important;
             page-break-inside: avoid !important;
-            min-height: 270mm !important; /* Total tinggi A4 dikurangi margin */
+            min-height: 270mm !important; /* Pas A4 */
             width: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
@@ -1163,10 +1164,14 @@ export const MCUResultDetail = () => {
           }
           .attachment-container {
             flex-grow: 1 !important;
-            height: 265mm !important; /* Tinggi sisa setelah judul */
+            height: 260mm !important; /* Area sisa untuk gambar */
             width: 100% !important;
             border: none !important;
             padding: 0 !important;
+            display: flex !important;
+            justify-content: center !important;
+            align-items: center !important;
+            background-color: white !important;
           }
           .attachment-frame {
             width: 100% !important;
@@ -1174,11 +1179,16 @@ export const MCUResultDetail = () => {
             border: none !important;
             background-color: white !important;
           }
+          
+          /* Format Paling Krusial Untuk File JPG/PNG */
           .attachment-img {
             width: 100% !important;
             height: 100% !important;
-            max-height: 265mm !important;
-            object-fit: contain !important;
+            max-width: 100% !important;
+            max-height: 260mm !important;
+            object-fit: contain !important; /* Memastikan gambar tidak terpotong dan rasionya terjaga proporsional */
+            margin: auto !important;
+            display: block !important;
           }
         }
       `}</style>
