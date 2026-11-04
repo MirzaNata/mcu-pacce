@@ -20,16 +20,18 @@ export const patientService = {
       nik: p.nik || p.identity_number || '',
       identityNumber: p.identity_number || p.nik || '',
       dateOfBirth: p.date_of_birth || p.dateOfBirth || '',
-      gender: p.gender || 'Laki-Laki',
+      gender: p.gender || p.jenis_kelamin || 'Laki-Laki',
       age: p.age || 0,
       company: p.company || p.company_name || '',
       companyName: p.company_name || p.company || '',
-      phoneNumber: p.phone_number || p.phone || '',
+      phone: p.phone_number || p.phone || p.phoneNumber || '',
+      phoneNumber: p.phone_number || p.phone || p.phoneNumber || '',
+      address: p.alamat || p.address || '',
       maritalStatus: p.marital_status || '',
       nationality: p.nationality || 'WNI',
-      bloodType: p.blood_type || 'A',
+      bloodType: p.blood_type || p.bloodType || 'A',
       rhesus: p.rhesus || '+',
-      registrationDate: p.registration_date || p.created_at || '',
+      registrationDate: p.registration_date || p.registrationDate || p.created_at || '',
       status: p.status || 'Pending',
     }));
   },
@@ -50,21 +52,25 @@ export const patientService = {
       nik: data.nik || data.identity_number || '',
       identityNumber: data.identity_number || data.nik || '',
       dateOfBirth: data.date_of_birth || '',
-      gender: data.gender || 'Laki-Laki',
+      gender: data.gender || data.jenis_kelamin || 'Laki-Laki',
       age: data.age || 0,
-      company: data.company || '',
+      company: data.company || data.company_name || '',
       companyName: data.company_name || data.company || '',
-      phoneNumber: data.phone_number || '',
+      phone: data.phone_number || data.phone || data.phoneNumber || '',
+      phoneNumber: data.phone_number || data.phone || data.phoneNumber || '',
+      address: data.alamat || data.address || '',
       maritalStatus: data.marital_status || '',
       nationality: data.nationality || 'WNI',
-      bloodType: data.blood_type || 'A',
+      bloodType: data.blood_type || data.bloodType || 'A',
       rhesus: data.rhesus || '+',
-      registrationDate: data.registration_date || '',
+      registrationDate: data.registration_date || data.registrationDate || data.created_at || '',
       status: data.status || 'Pending',
     };
   },
 
   async addPatient(patient: Partial<Patient>): Promise<Patient | null> {
+    const pAny = patient as any;
+
     // Generate No MCU otomatis jika tidak diisi atau string kosong
     const autoMcu = patient.mcuNumber && patient.mcuNumber.trim() !== '' 
       ? patient.mcuNumber 
@@ -74,18 +80,20 @@ export const patientService = {
       .from('patients')
       .insert([{
         mcu_number: autoMcu,
-        full_name: patient.fullName,
-        nik: patient.nik || patient.identityNumber || '',
-        identity_number: patient.identityNumber || patient.nik || '',
-        date_of_birth: patient.dateOfBirth || null, // Diubah ke null agar tidak error format date di Supabase
-        gender: patient.gender || 'Laki-Laki',
-        age: Number(patient.age) || 0, // Dipastikan berupa Angka
-        company: patient.company || patient.companyName || '',
-        company_name: patient.companyName || patient.company || '',
-        phone_number: patient.phoneNumber || patient.phone || '',
+        full_name: patient.fullName || pAny.full_name,
+        nik: patient.nik || patient.identityNumber || pAny.identity_number || '',
+        identity_number: patient.identityNumber || patient.nik || pAny.identity_number || '',
+        date_of_birth: patient.dateOfBirth || pAny.date_of_birth || null,
+        gender: patient.gender || pAny.jenis_kelamin || 'Laki-Laki',
+        age: Number(patient.age) || 0,
+        company: patient.company || patient.companyName || pAny.company_name || '',
+        company_name: patient.companyName || patient.company || pAny.company_name || '',
+        phone_number: patient.phoneNumber || patient.phone || pAny.phone_number || '',
+        alamat: patient.address || pAny.alamat || '',
+        registration_date: patient.registrationDate || pAny.registration_date || new Date().toISOString().split('T')[0],
         marital_status: patient.maritalStatus || 'Belum Menikah',
         nationality: patient.nationality || 'WNI',
-        blood_type: patient.bloodType || 'A',
+        blood_type: patient.bloodType || pAny.blood_type || 'A',
         rhesus: patient.rhesus || '+',
         status: patient.status || 'Registered',
       }])
@@ -106,21 +114,25 @@ export const patientService = {
   },
 
   async updatePatient(id: string, patient: Partial<Patient>): Promise<Patient | null> {
+    const pAny = patient as any;
+
     const { error } = await supabase
       .from('patients')
       .update({
-        full_name: patient.fullName,
-        nik: patient.nik || patient.identityNumber,
-        identity_number: patient.identityNumber || patient.nik,
-        date_of_birth: patient.dateOfBirth,
-        gender: patient.gender,
-        age: patient.age,
-        company: patient.company || patient.companyName,
-        company_name: patient.companyName || patient.company,
-        phone_number: patient.phoneNumber || patient.phone,
+        full_name: patient.fullName || pAny.full_name,
+        nik: patient.nik || patient.identityNumber || pAny.identity_number,
+        identity_number: patient.identityNumber || patient.nik || pAny.identity_number,
+        date_of_birth: patient.dateOfBirth || pAny.date_of_birth || null,
+        gender: patient.gender || pAny.jenis_kelamin,
+        age: patient.age !== undefined ? Number(patient.age) : undefined,
+        company: patient.company || patient.companyName || pAny.company_name,
+        company_name: patient.companyName || patient.company || pAny.company_name,
+        phone_number: patient.phoneNumber || patient.phone || pAny.phone_number,
+        alamat: patient.address !== undefined ? patient.address : pAny.alamat,
+        registration_date: patient.registrationDate || pAny.registration_date || null,
         marital_status: patient.maritalStatus,
         nationality: patient.nationality,
-        blood_type: patient.bloodType,
+        blood_type: patient.bloodType || pAny.blood_type,
         rhesus: patient.rhesus,
         status: patient.status,
       })
@@ -128,6 +140,7 @@ export const patientService = {
 
     if (error) {
       console.error('Error updating patient:', error);
+      alert('Gagal memperbarui peserta: ' + error.message);
       return null;
     }
 
