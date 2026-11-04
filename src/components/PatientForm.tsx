@@ -1,63 +1,91 @@
-import React, { useState } from 'react';
-import { X, UserCheck } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { X, UserPlus, Save } from 'lucide-react';
+import { patientService } from '../services/patientService';
 import type { Patient } from '../types';
 
 export interface PatientFormProps {
-  initialData?: Patient;
-  onSubmit: (formData: Partial<Patient>) => Promise<void> | void;
+  patient?: Patient | null;
   onClose: () => void;
+  onSubmit?: () => void | Promise<void>;
+  onSuccess?: () => void | Promise<void>;
 }
 
 export const PatientForm: React.FC<PatientFormProps> = ({
-  initialData,
-  onSubmit,
+  patient,
   onClose,
+  onSubmit,
+  onSuccess,
 }) => {
-  const [fullName, setFullName] = useState(initialData?.fullName || '');
-  const [identityNumber, setIdentityNumber] = useState(initialData?.identityNumber || initialData?.nik || '');
-  const [dateOfBirth, setDateOfBirth] = useState(initialData?.dateOfBirth || '');
-  const [gender, setGender] = useState<'Laki-Laki' | 'Perempuan' | 'L' | 'P'>(initialData?.gender || 'Laki-Laki');
-  const [nationality, setNationality] = useState(initialData?.nationality || 'WNI');
-  const [bloodType, setBloodType] = useState(initialData?.bloodType || 'A');
-  const [rhesus, setRhesus] = useState(initialData?.rhesus || '+');
-  const [maritalStatus, setMaritalStatus] = useState(initialData?.maritalStatus || 'Belum Menikah');
-  const [phoneNumber, setPhoneNumber] = useState(initialData?.phoneNumber || initialData?.phone || '');
-  const [companyName, setCompanyName] = useState(initialData?.companyName || initialData?.company || '');
-  const [department, setDepartment] = useState(initialData?.department || '');
-  const [position, setPosition] = useState(initialData?.position || '');
+  const [formData, setFormData] = useState<Partial<Patient>>({
+    fullName: '',
+    nik: '',
+    mcuNumber: '',
+    gender: 'Laki-Laki',
+    age: undefined,
+    dateOfBirth: '',
+    phone: '',
+    address: '',
+    company: '',
+    bloodType: '',
+    registrationDate: new Date().toISOString().split('T')[0],
+  });
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  useEffect(() => {
+    if (patient) {
+      setFormData({
+        ...patient,
+        company: patient.company || patient.companyName || '',
+        nik: patient.nik || (patient as any).identityNumber || '',
+      });
+    } else {
+      setFormData({
+        fullName: '',
+        nik: '',
+        mcuNumber: '',
+        gender: 'Laki-Laki',
+        age: undefined,
+        dateOfBirth: '',
+        phone: '',
+        address: '',
+        company: '',
+        bloodType: '',
+        registrationDate: new Date().toISOString().split('T')[0],
+      });
+    }
+  }, [patient]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit({
-      fullName,
-      nik: identityNumber,
-      identityNumber,
-      dateOfBirth,
-      gender,
-      nationality,
-      bloodType,
-      rhesus,
-      maritalStatus,
-      phoneNumber,
-      phone: phoneNumber,
-      companyName,
-      company: companyName,
-      department,
-      position,
-    });
+    setLoading(true);
+    try {
+      if (patient && patient.id) {
+        await patientService.updatePatient(patient.id, formData as Patient);
+      } else {
+        await patientService.addPatient(formData as Patient);
+      }
+      
+      if (onSubmit) await onSubmit();
+      if (onSuccess) await onSuccess();
+      onClose();
+    } catch (err) {
+      console.error('Gagal menyimpan data pasien:', err);
+      alert('Terjadi kesalahan saat menyimpan data pasien.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl relative space-y-5">
-        <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-          <div className="flex items-center gap-2">
-            <UserCheck className="w-5 h-5 text-blue-600" />
-            <h2 className="text-base font-bold text-gray-900">
-              {initialData ? 'Edit Data Peserta MCU' : 'Tambah Peserta MCU Baru'}
-            </h2>
-          </div>
+    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 overflow-y-auto">
+      <div className="bg-white rounded-2xl max-w-xl w-full p-6 space-y-6 shadow-xl relative my-8">
+        <div className="flex justify-between items-center border-b pb-4">
+          <h2 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+            <UserPlus className="w-5 h-5 text-blue-600" />
+            {patient ? 'Edit Data Peserta MCU' : 'Tambah Peserta MCU Baru'}
+          </h2>
           <button
+            type="button"
             onClick={onClose}
             className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-xl transition-colors cursor-pointer"
           >
@@ -65,49 +93,61 @@ export const PatientForm: React.FC<PatientFormProps> = ({
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 text-xs">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="sm:col-span-2">
-              <label className="block font-bold text-gray-700 mb-1">
-                Nama Lengkap Peserta <span className="text-red-500">*</span>
-              </label>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs">
+            <div>
+              <label className="block font-bold text-gray-700 mb-1">Nama Lengkap *</label>
               <input
                 type="text"
                 required
-                value={fullName}
-                onChange={(e) => setFullName(e.target.value)}
-                placeholder="mis. Budi Santoso"
+                value={formData.fullName || ''}
+                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                 className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-hidden focus:ring-2 focus:ring-blue-500"
+                placeholder="Masukkan nama lengkap"
               />
             </div>
 
             <div>
-              <label className="block font-bold text-gray-700 mb-1">NIK / No. Identitas</label>
+              <label className="block font-bold text-gray-700 mb-1">NIK / No. Identitas *</label>
               <input
                 type="text"
-                value={identityNumber}
-                onChange={(e) => setIdentityNumber(e.target.value)}
-                placeholder="16 digit NIK"
+                required
+                value={formData.nik || (formData as any).identityNumber || ''}
+                onChange={(e) => setFormData({ ...formData, nik: e.target.value, identityNumber: e.target.value } as any)}
                 className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-hidden focus:ring-2 focus:ring-blue-500"
+                placeholder="Nomor NIK KTP/Passport"
               />
             </div>
 
             <div>
-              <label className="block font-bold text-gray-700 mb-1">Tanggal Lahir</label>
+              <label className="block font-bold text-gray-700 mb-1">No. MCU</label>
               <input
-                type="date"
-                value={dateOfBirth}
-                onChange={(e) => setDateOfBirth(e.target.value)}
-                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-hidden focus:ring-2 focus:ring-blue-500"
+                type="text"
+                value={formData.mcuNumber || ''}
+                onChange={(e) => setFormData({ ...formData, mcuNumber: e.target.value })}
+                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-hidden focus:ring-2 focus:ring-blue-500 font-mono"
+                placeholder="Otomatis / Manual (cth: MCU-738721)"
               />
             </div>
 
             <div>
-              <label className="block font-bold text-gray-700 mb-1">Jenis Kelamin</label>
+              <label className="block font-bold text-gray-700 mb-1">Perusahaan / Instansi *</label>
+              <input
+                type="text"
+                required
+                value={formData.company || (formData as any).companyName || ''}
+                onChange={(e) => setFormData({ ...formData, company: e.target.value, companyName: e.target.value } as any)}
+                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-hidden focus:ring-2 focus:ring-blue-500"
+                placeholder="Nama perusahaan"
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-gray-700 mb-1">Jenis Kelamin *</label>
               <select
-                value={gender}
-                onChange={(e) => setGender(e.target.value as any)}
-                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-hidden focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                value={formData.gender || 'Laki-Laki'}
+                onChange={(e) => setFormData({ ...formData, gender: e.target.value as any })}
+                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-hidden focus:ring-2 focus:ring-blue-500"
               >
                 <option value="Laki-Laki">Laki-Laki</option>
                 <option value="Perempuan">Perempuan</option>
@@ -115,111 +155,85 @@ export const PatientForm: React.FC<PatientFormProps> = ({
             </div>
 
             <div>
-              <label className="block font-bold text-gray-700 mb-1">Status Pernikahan</label>
-              <select
-                value={maritalStatus}
-                onChange={(e) => setMaritalStatus(e.target.value)}
-                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-hidden focus:ring-2 focus:ring-blue-500 cursor-pointer"
-              >
-                <option value="Belum Menikah">Belum Menikah</option>
-                <option value="Menikah">Menikah</option>
-                <option value="Duda/Janda">Duda / Janda</option>
-              </select>
+              <label className="block font-bold text-gray-700 mb-1">Usia (Tahun)</label>
+              <input
+                type="number"
+                value={formData.age || ''}
+                onChange={(e) => setFormData({ ...formData, age: Number(e.target.value) || undefined })}
+                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-hidden focus:ring-2 focus:ring-blue-500"
+                placeholder="Contoh: 28"
+              />
             </div>
 
             <div>
-              <label className="block font-bold text-gray-700 mb-1">No. HP / WhatsApp</label>
+              <label className="block font-bold text-gray-700 mb-1">Tanggal Lahir</label>
               <input
-                type="text"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-                placeholder="mis. 08123456789"
+                type="date"
+                value={formData.dateOfBirth || ''}
+                onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
                 className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-hidden focus:ring-2 focus:ring-blue-500"
               />
             </div>
 
             <div>
-              <label className="block font-bold text-gray-700 mb-1">Kewarganegaraan</label>
+              <label className="block font-bold text-gray-700 mb-1">No. Telepon / WA</label>
               <input
                 type="text"
-                value={nationality}
-                onChange={(e) => setNationality(e.target.value)}
-                placeholder="WNI / WNA"
+                value={formData.phone || ''}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-hidden focus:ring-2 focus:ring-blue-500"
+                placeholder="08123456789"
               />
             </div>
 
             <div>
               <label className="block font-bold text-gray-700 mb-1">Golongan Darah</label>
-              <div className="flex gap-2">
-                <select
-                  value={bloodType}
-                  onChange={(e) => setBloodType(e.target.value)}
-                  className="flex-1 p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-hidden focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                >
-                  <option value="A">A</option>
-                  <option value="B">B</option>
-                  <option value="AB">AB</option>
-                  <option value="O">O</option>
-                </select>
-                <select
-                  value={rhesus}
-                  onChange={(e) => setRhesus(e.target.value)}
-                  className="w-20 p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-hidden focus:ring-2 focus:ring-blue-500 cursor-pointer"
-                >
-                  <option value="+">+</option>
-                  <option value="-">-</option>
-                </select>
-              </div>
-            </div>
-
-            <div>
-              <label className="block font-bold text-gray-700 mb-1">Perusahaan / Instansi</label>
               <input
                 type="text"
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-                placeholder="Nama PT / Instansi"
+                value={formData.bloodType || ''}
+                onChange={(e) => setFormData({ ...formData, bloodType: e.target.value })}
                 className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-hidden focus:ring-2 focus:ring-blue-500"
+                placeholder="Contoh: O (+)"
               />
             </div>
 
             <div>
-              <label className="block font-bold text-gray-700 mb-1">Departemen</label>
+              <label className="block font-bold text-gray-700 mb-1">Tanggal Registrasi</label>
               <input
-                type="text"
-                value={department}
-                onChange={(e) => setDepartment(e.target.value)}
-                placeholder="mis. Produksi / HRD"
-                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-hidden focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-
-            <div>
-              <label className="block font-bold text-gray-700 mb-1">Jabatan / Posisi</label>
-              <input
-                type="text"
-                value={position}
-                onChange={(e) => setPosition(e.target.value)}
-                placeholder="mis. Staff / Operator"
+                type="date"
+                value={formData.registrationDate || ''}
+                onChange={(e) => setFormData({ ...formData, registrationDate: e.target.value })}
                 className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-hidden focus:ring-2 focus:ring-blue-500"
               />
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+          <div>
+            <label className="block font-bold text-gray-700 mb-1 text-xs">Alamat Lengkap</label>
+            <textarea
+              rows={2}
+              value={formData.address || ''}
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs outline-hidden focus:ring-2 focus:ring-blue-500"
+              placeholder="Alamat domisili peserta"
+            />
+          </div>
+
+          <div className="flex justify-end gap-2 pt-4 border-t">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold rounded-xl transition-colors cursor-pointer"
+              className="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs rounded-xl transition-colors cursor-pointer"
             >
               Batal
             </button>
             <button
               type="submit"
-              className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
+              disabled={loading}
+              className="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer flex items-center gap-1.5 disabled:opacity-50"
             >
-              {initialData ? 'Simpan Perubahan' : 'Daftarkan Peserta'}
+              <Save className="w-4 h-4" />
+              <span>{loading ? 'Menyimpan...' : patient ? 'Simpan Perubahan' : 'Tambah Peserta'}</span>
             </button>
           </div>
         </form>

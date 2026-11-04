@@ -6,7 +6,8 @@ import {
   Printer, 
   Trash2, 
   Filter, 
-  UserPlus 
+  UserPlus,
+  Edit 
 } from 'lucide-react';
 import { patientService } from '../services/patientService';
 import { mcuService } from '../services/mcuService';
@@ -20,43 +21,52 @@ export const Patients = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedCompany, setSelectedCompany] = useState<string>('ALL');
+  
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [selectedPatient, setSelectedPatient] = useState<Patient | null>(null);
 
   useEffect(() => {
     loadData();
   }, []);
 
   const loadData = async () => {
-  try {
-    setLoading(true);
-    // 1. Ambil seluruh daftar peserta
-    const patientList = await patientService.getPatients();
-    setPatients(patientList);
+    try {
+      setLoading(true);
+      const patientList = await patientService.getPatients();
+      setPatients(patientList);
 
-    // 2. Ambil data MCU secara PARALEL (semua sekaligus)
-    const mcuPromises = patientList.map(async (p) => {
-      if (!p.id) return null;
-      const mcu = await mcuService.getMCUByPatientId(p.id);
-      return { id: p.id, mcu };
-    });
+      const mcuPromises = patientList.map(async (p) => {
+        if (!p.id) return null;
+        const mcu = await mcuService.getMCUByPatientId(p.id);
+        return { id: p.id, mcu };
+      });
 
-    const mcuResults = await Promise.all(mcuPromises);
+      const mcuResults = await Promise.all(mcuPromises);
 
-    // 3. Susun ke dalam state map
-    const records: Record<string, MCURecord> = {};
-    mcuResults.forEach((item) => {
-      if (item && item.mcu) {
-        records[item.id] = item.mcu;
-      }
-    });
+      const records: Record<string, MCURecord> = {};
+      mcuResults.forEach((item) => {
+        if (item && item.mcu) {
+          records[item.id] = item.mcu;
+        }
+      });
 
-    setMcuRecords(records);
-  } catch (err) {
-    console.error('Gagal memuat data:', err);
-  } finally {
-    setLoading(false);
-  }
-};
+      setMcuRecords(records);
+    } catch (err) {
+      console.error('Gagal memuat data:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleOpenAddModal = () => {
+    setSelectedPatient(null);
+    setIsModalOpen(true);
+  };
+
+  const handleOpenEditModal = (patient: Patient) => {
+    setSelectedPatient(patient);
+    setIsModalOpen(true);
+  };
 
   const handleDelete = async (id: string) => {
     if (confirm('Apakah Anda yakin ingin menghapus data peserta ini?')) {
@@ -67,6 +77,16 @@ export const Patients = () => {
         alert('Gagal menghapus peserta');
       }
     }
+  };
+
+  const handleFormClose = () => {
+    setIsModalOpen(false);
+    setSelectedPatient(null);
+  };
+
+  const handleFormSuccess = async () => {
+    handleFormClose();
+    await loadData();
   };
 
   const filteredPatients = patients.filter((p) => {
@@ -95,7 +115,7 @@ export const Patients = () => {
         </div>
         <button
           type="button"
-          onClick={() => setIsModalOpen(true)}
+          onClick={handleOpenAddModal}
           className="flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer"
         >
           <UserPlus className="w-4 h-4" />
@@ -211,6 +231,16 @@ export const Patients = () => {
                             <span>Periksa</span>
                           </button>
 
+                          {/* Tombol Edit */}
+                          <button
+                            type="button"
+                            onClick={() => handleOpenEditModal(p)}
+                            className="p-1.5 bg-amber-50 text-amber-600 hover:bg-amber-100 rounded-lg transition-all font-bold text-[11px] cursor-pointer"
+                            title="Edit Data Peserta"
+                          >
+                            <Edit className="w-3.5 h-3.5" />
+                          </button>
+
                           {/* Tombol Cetak PDF Hasil */}
                           <button
                             type="button"
@@ -242,13 +272,13 @@ export const Patients = () => {
         </div>
       </div>
 
+      {/* Modal Form Tambah / Edit Peserta */}
       {isModalOpen && (
         <PatientForm
-          onClose={() => setIsModalOpen(false)}
-          onSubmit={async () => {
-            setIsModalOpen(false);
-            await loadData();
-          }}
+          patient={selectedPatient}
+          onClose={handleFormClose}
+          onSubmit={handleFormSuccess}
+          onSuccess={handleFormSuccess}
         />
       )}
     </div>
