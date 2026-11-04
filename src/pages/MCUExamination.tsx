@@ -1814,7 +1814,7 @@ export const MCUExamination = () => {
                           />
                         </td>
 
-                        {/* TOMBOL UPLOAD PER ITEM */}
+                        {/* TOMBOL UPLOAD PER ITEM UTAMA */}
                         <td className="p-3 text-center">
                           <div className="flex flex-col items-center gap-1.5">
                             {attachedFiles.length > 0 ? (
@@ -1870,6 +1870,7 @@ export const MCUExamination = () => {
               </table>
             </div>
 
+            {/* PEMERIKSAAN PENUNJANG TAMBAHAN */}
             <div className="pt-4 border-t border-gray-200 space-y-4">
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
@@ -1892,73 +1893,134 @@ export const MCUExamination = () => {
                 </div>
               ) : (
                 <div className="space-y-3">
-                  {(mcuData.supportingExamination?.additionalExams || []).map((exam) => (
-                    <div
-                      key={exam.id}
-                      className="p-4 bg-gray-50/80 rounded-2xl border border-gray-200 grid grid-cols-1 md:grid-cols-12 gap-3 items-center"
-                    >
-                      <div className="md:col-span-4">
-                        <label className="block text-[11px] font-bold text-gray-700 mb-1">Nama Pemeriksaan</label>
-                        <input
-                          type="text"
-                          value={exam.name}
-                          onChange={(e) => handleUpdateAdditionalExam(exam.id, 'name', e.target.value)}
-                          placeholder="mis. USG Abdomen, Lab Darah..."
-                          className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs outline-hidden focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div>
+                  {(mcuData.supportingExamination?.additionalExams || []).map((exam) => {
+                    const attachedFiles = penunjangAttachments.filter(
+                      (att) => att.examType === exam.id || att.fileType === exam.id
+                    );
 
-                      <div className="md:col-span-3 text-center">
-                        <label className="block text-[11px] font-bold text-gray-700 mb-1">Status Hasil</label>
-                        <div className="inline-flex rounded-lg border border-gray-200 bg-white p-1 gap-1">
+                    return (
+                      <div
+                        key={exam.id}
+                        className="p-4 bg-gray-50/80 rounded-2xl border border-gray-200 grid grid-cols-1 md:grid-cols-12 gap-3 items-center"
+                      >
+                        {/* NAMA PEMERIKSAAN */}
+                        <div className="md:col-span-3">
+                          <label className="block text-[11px] font-bold text-gray-700 mb-1">Nama Pemeriksaan</label>
+                          <input
+                            type="text"
+                            value={exam.name}
+                            onChange={(e) => handleUpdateAdditionalExam(exam.id, 'name', e.target.value)}
+                            placeholder="mis. USG Abdomen, Lab Darah..."
+                            className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs outline-hidden focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+
+                        {/* STATUS HASIL */}
+                        <div className="md:col-span-3 text-center">
+                          <label className="block text-[11px] font-bold text-gray-700 mb-1">Status Hasil</label>
+                          <div className="inline-flex rounded-lg border border-gray-200 bg-white p-1 gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateAdditionalExam(exam.id, 'status', 'Normal')}
+                              className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                                exam.status === 'Normal'
+                                  ? 'bg-green-600 text-white shadow-xs'
+                                  : 'text-gray-600 hover:bg-gray-100'
+                              }`}
+                            >
+                              Normal
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleUpdateAdditionalExam(exam.id, 'status', 'Tidak Normal')}
+                              className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                                exam.status === 'Tidak Normal'
+                                  ? 'bg-red-600 text-white shadow-xs'
+                                  : 'text-gray-600 hover:bg-gray-100'
+                              }`}
+                            >
+                              Tidak Normal
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* CATATAN HASIL */}
+                        <div className="md:col-span-3">
+                          <label className="block text-[11px] font-bold text-gray-700 mb-1">Catatan Hasil</label>
+                          <input
+                            type="text"
+                            value={exam.notes || ''}
+                            onChange={(e) => handleUpdateAdditionalExam(exam.id, 'notes', e.target.value)}
+                            placeholder="Catatan temuan..."
+                            className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs outline-hidden focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+
+                        {/* TOMBOL UPLOAD BERKAS PEMERIKSAAN TAMBAHAN */}
+                        <div className="md:col-span-2 text-center">
+                          <label className="block text-[11px] font-bold text-gray-700 mb-1">Berkas Lampiran</label>
+                          <div className="flex flex-col items-center gap-1">
+                            {attachedFiles.length > 0 ? (
+                              <div className="space-y-1 w-full">
+                                {attachedFiles.map((file) => (
+                                  <div key={file.id} className="flex items-center justify-between p-1 bg-blue-50 border border-blue-200 rounded-lg text-[10px]">
+                                    <span className="truncate max-w-20 font-medium text-blue-900" title={file.fileName}>
+                                      {file.fileName}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeletePenunjangFile(file.id)}
+                                      className="text-red-500 hover:text-red-700 p-0.5 rounded cursor-pointer"
+                                      title="Hapus berkas"
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <label className="w-full py-1.5 bg-white hover:bg-blue-50 text-gray-700 hover:text-blue-600 font-bold text-[11px] rounded-lg cursor-pointer border border-gray-200 hover:border-blue-300 transition-all inline-flex items-center justify-center gap-1 shadow-2xs">
+                                <Upload className="w-3.5 h-3.5" />
+                                <span>{uploadingFile ? 'Mengunggah...' : 'Upload'}</span>
+                                <input
+                                  type="file"
+                                  accept="image/*,application/pdf"
+                                  disabled={uploadingFile}
+                                  onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file && id) {
+                                      setUploadingFile(true);
+                                      try {
+                                        await attachmentService.uploadAttachment(id, file, 'PENUNJANG', exam.id);
+                                        await loadPenunjangAttachments(id);
+                                      } catch (err) {
+                                        console.error('Gagal mengunggah file:', err);
+                                      } finally {
+                                        setUploadingFile(false);
+                                      }
+                                    }
+                                  }}
+                                  className="hidden"
+                                />
+                              </label>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* TOMBOL HAPUS BARIS */}
+                        <div className="md:col-span-1 flex justify-end md:justify-center pt-2 md:pt-4">
                           <button
                             type="button"
-                            onClick={() => handleUpdateAdditionalExam(exam.id, 'status', 'Normal')}
-                            className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
-                              exam.status === 'Normal'
-                                ? 'bg-green-600 text-white shadow-xs'
-                                : 'text-gray-600 hover:bg-gray-100'
-                            }`}
+                            onClick={() => handleDeleteAdditionalExam(exam.id)}
+                            className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
+                            title="Hapus Pemeriksaan"
                           >
-                            Normal
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handleUpdateAdditionalExam(exam.id, 'status', 'Tidak Normal')}
-                            className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
-                              exam.status === 'Tidak Normal'
-                                ? 'bg-red-600 text-white shadow-xs'
-                                : 'text-gray-600 hover:bg-gray-100'
-                            }`}
-                          >
-                            Tidak Normal
+                            <Trash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
-
-                      <div className="md:col-span-4">
-                        <label className="block text-[11px] font-bold text-gray-700 mb-1">Catatan Hasil</label>
-                        <input
-                          type="text"
-                          value={exam.notes || ''}
-                          onChange={(e) => handleUpdateAdditionalExam(exam.id, 'notes', e.target.value)}
-                          placeholder="Catatan temuan..."
-                          className="w-full px-3 py-1.5 bg-white border border-gray-200 rounded-lg text-xs outline-hidden focus:ring-2 focus:ring-blue-500"
-                        />
-                      </div>
-
-                      <div className="md:col-span-1 flex justify-end md:justify-center pt-2 md:pt-4">
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteAdditionalExam(exam.id)}
-                          className="p-1.5 text-red-500 hover:bg-red-50 rounded-lg transition-colors cursor-pointer"
-                          title="Hapus Pemeriksaan"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               )}
             </div>
