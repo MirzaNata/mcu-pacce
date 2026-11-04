@@ -31,6 +31,38 @@ export const PatientForm: React.FC<PatientFormProps> = ({
   });
   const [loading, setLoading] = useState(false);
 
+  /**
+   * Helper untuk mengonversi berbagai bentuk string tanggal ke format YYYY-MM-DD
+   * agar dapat dibaca secara valid oleh <input type="date">
+   */
+  const formatDateForInput = (dateStr?: string): string => {
+    if (!dateStr) return '';
+    
+    // Jika format ISO (contoh: 2026-10-08T00:00:00.000Z)
+    if (dateStr.includes('T')) {
+      return dateStr.split('T')[0];
+    }
+    // Jika format dengan spasi (contoh: 2026-10-08 10:00:00)
+    if (dateStr.includes(' ')) {
+      return dateStr.split(' ')[0];
+    }
+    // Jika format DD-MM-YYYY (contoh: 08-10-2026)
+    if (dateStr.includes('-')) {
+      const parts = dateStr.split('-');
+      if (parts[0].length === 2 && parts[2].length === 4) {
+        return `${parts[2]}-${parts[1]}-${parts[0]}`;
+      }
+    }
+    // Jika format DD/MM/YYYY (contoh: 08/10/2026)
+    if (dateStr.includes('/')) {
+      const parts = dateStr.split('/');
+      if (parts[0].length === 2 && parts[2].length === 4) {
+        return `${parts[2]}-${parts[1]}-${parts[0]}`;
+      }
+    }
+    return dateStr;
+  };
+
   // Hitung usia otomatis dari tanggal lahir
   const calculateAge = (dobString: string): number | undefined => {
     if (!dobString) return undefined;
@@ -49,13 +81,16 @@ export const PatientForm: React.FC<PatientFormProps> = ({
     if (patient) {
       const pAny = patient as any;
       
-      // Ambil tanggal registrasi dari berbagai kemungkinan field
+      // Ambil tanggal registrasi & format ke YYYY-MM-DD
       const rawRegDate = patient.registrationDate || pAny.registration_date || pAny.created_at || '';
-      const formattedRegDate = rawRegDate ? rawRegDate.split('T')[0] : new Date().toISOString().split('T')[0];
+      const formattedRegDate = formatDateForInput(rawRegDate) || new Date().toISOString().split('T')[0];
 
-      // Ambil tanggal lahir
+      // Ambil tanggal lahir & format ke YYYY-MM-DD
       const rawDob = patient.dateOfBirth || pAny.date_of_birth || '';
-      const formattedDob = rawDob ? rawDob.split('T')[0] : '';
+      const formattedDob = formatDateForInput(rawDob);
+
+      // Ambil alamat dari semua kemungkinan variabel
+      const currentAddress = patient.address || pAny.alamat || pAny.full_address || pAny.address_detail || '';
 
       setFormData({
         ...patient,
@@ -63,11 +98,11 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         nik: patient.nik || pAny.identityNumber || pAny.identity_number || '',
         company: patient.company || patient.companyName || pAny.company_name || '',
         phone: patient.phone || pAny.phoneNumber || pAny.phone_number || '',
-        address: patient.address || pAny.alamat || '',
+        address: currentAddress,
         gender: patient.gender || pAny.jenis_kelamin || 'Laki-Laki',
         bloodType: patient.bloodType || pAny.blood_type || '',
         dateOfBirth: formattedDob,
-        age: patient.age || calculateAge(formattedDob),
+        age: patient.age !== undefined && patient.age !== null ? patient.age : calculateAge(formattedDob),
         registrationDate: formattedRegDate,
       });
     } else {
@@ -116,16 +151,15 @@ export const PatientForm: React.FC<PatientFormProps> = ({
         companyName: formData.company,
         company_name: formData.company,
 
-        // No. Telepon disinkronkan ke 3 variasi variabel
         phone: formData.phone,
         phoneNumber: formData.phone,
         phone_number: formData.phone,
 
-        // Alamat disinkronkan ke 2 variasi variabel
+        // Simpan alamat ke variabel camelCase dan snake_case
         address: formData.address,
         alamat: formData.address,
 
-        // Tanggal Registrasi disinkronkan ke 2 variasi variabel
+        // Simpan tanggal registrasi ke variabel camelCase dan snake_case
         registrationDate: formData.registrationDate,
         registration_date: formData.registrationDate,
 
