@@ -1109,27 +1109,53 @@ export const MCUResultDetail = () => {
                     </span>
                   </div>
 
-                  <div className="space-y-6">
-                    {penunjangAttachments.map((file, idx) => (
-                      <div key={file.id || idx} className="space-y-2 border border-black p-2 bg-white">
-                        <div className="font-bold text-[11px] text-gray-800 border-b border-black pb-1">
-                          Berkas {idx + 1}: {file.fileName || 'Hasil Pemeriksaan Penunjang'}
-                        </div>
-                        {isPdfUrl(file.fileUrl) ? (
-                          <PdfAttachmentRenderer
-                            pdfUrl={file.fileUrl}
-                            title={`Lampiran Penunjang: ${file.fileName || `Berkas ${idx + 1}`}`}
-                            patientName={patient.fullName}
-                            mcuNumber={patient.mcuNumber || '-'}
-                          />
-                        ) : (
-                          <div className="attachment-container">
-                            <img src={file.fileUrl} alt={file.fileName || 'Hasil Penunjang'} className="attachment-img" />
+                  <div className="space-y-8 mt-8">
+                      {penunjangAttachments.map((file, index) => {
+                        // Deteksi tipe file
+                        const isImage = file.fileType?.startsWith('image/') || 
+                                        file.fileUrl.match(/\.(jpeg|jpg|gif|png)$/i) != null;
+                        const isPdf = file.fileType === 'application/pdf' || 
+                                      file.fileUrl.toLowerCase().endsWith('.pdf');
+
+                        return (
+                          <div 
+                            key={file.id} 
+                            // Menggunakan break-before-page agar setiap lampiran dicetak di halaman baru (opsional, sesuaikan kebutuhan)
+                            className="print:break-before-page border border-gray-200 print:border-none rounded-lg p-4 print:p-0"
+                          >
+                            <h4 className="font-bold text-gray-800 text-sm mb-4 border-b-2 border-gray-800 pb-2">
+                              LAMPIRAN {index + 1}: {file.examType ? file.examType.toUpperCase() : 'PEMERIKSAAN PENUNJANG'} 
+                              <span className="text-xs font-normal text-gray-500 ml-2">({file.fileName})</span>
+                            </h4>
+                            
+                            {isImage ? (
+                              <div className="flex justify-center">
+                                <img 
+                                  src={file.fileUrl} 
+                                  alt={file.fileName} 
+                                  className="max-w-full h-auto max-h-225 object-contain print:max-h-[250mm]"
+                                />
+                              </div>
+                            ) : isPdf ? (
+                              // Render PDF persis seperti di Lab / Radiologi
+                              <div className="w-full h-200 print:h-[250mm] flex justify-center">
+                                <iframe
+                                  // Tambahkan parameter toolbar=0 agar menu navigasi PDF bawaan browser tidak ikut tercetak
+                                  src={`${file.fileUrl}#toolbar=0&navpanes=0&scrollbar=0`}
+                                  title={file.fileName}
+                                  className="w-full h-full border-0"
+                                />
+                              </div>
+                            ) : (
+                              <div className="text-center p-8 bg-gray-50 border border-dashed border-gray-300">
+                                <p className="text-sm font-bold text-gray-700">Format dokumen tidak didukung untuk pratinjau cetak.</p>
+                                <p className="text-xs text-blue-600 mt-2 underline">{file.fileUrl}</p>
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                        );
+                      })}
+                    </div>
                 </div>
               )}
 
