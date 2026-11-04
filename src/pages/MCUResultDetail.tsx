@@ -730,7 +730,7 @@ export const MCUResultDetail = () => {
                         No. Telp.<br/><span className="text-[10px] font-normal italic text-gray-500">Phone Number</span>
                       </td>
                       <td className="p-2">
-                        : {patient.phone || '-'}
+                        : {patient?.phone || patient?.phoneNumber || (patient as any)?.phone_number || '-'}
                       </td>
                     </tr>
                     <tr>
@@ -738,7 +738,7 @@ export const MCUResultDetail = () => {
                         Alamat<br/><span className="text-[10px] font-normal italic text-gray-500">Address</span>
                       </td>
                       <td colSpan={3} className="p-2">
-                        : {patient.address || '-'}
+                        : {patient?.address || (patient as any)?.alamat || '-'}
                       </td>
                     </tr>
                   </tbody>
