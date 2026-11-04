@@ -21,11 +21,13 @@ import {
   Save,
   Building2,
   Calendar,
-  Printer
+  Printer,
+  FileText
 } from 'lucide-react';
 import { mcuService } from '../services/mcuService';
 import { patientService } from '../services/patientService';
 import { authService } from '../services/authService';
+import { attachmentService } from '../services/attachmentService';
 import type { 
   Patient,
   MCURecord, 
@@ -34,7 +36,8 @@ import type {
   Lifestyle,
   AdditionalExamItem,
   GeneralExamination,
-  DoctorConclusion
+  DoctorConclusion,
+  Attachment
 } from '../types';
 
 const ANAMNESIS_COMPLAINTS = [
@@ -129,6 +132,8 @@ export const MCUExamination = () => {
 
   const [patient, setPatient] = useState<Patient | null>(null);
   const [mcuData, setMcuData] = useState<MCURecord | null>(null);
+  const [penunjangAttachments, setPenunjangAttachments] = useState<Attachment[]>([]);
+  const [uploadingFile, setUploadingFile] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
   const [saving, setSaving] = useState<boolean>(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -158,6 +163,17 @@ export const MCUExamination = () => {
   const isFirstTab = currentIndex <= 0;
   const isLastTab = currentIndex === availableTabs.length - 1;
 
+  const loadPenunjangAttachments = async (patientId: string) => {
+    try {
+      if (typeof attachmentService?.getAttachmentsByPatientId === 'function') {
+        const list = await attachmentService.getAttachmentsByPatientId(patientId, 'PENUNJANG');
+        setPenunjangAttachments(list || []);
+      }
+    } catch (err) {
+      console.error('Gagal memuat lampiran penunjang:', err);
+    }
+  };
+
   useEffect(() => {
     let isMounted = true;
     if (!id) {
@@ -184,6 +200,7 @@ export const MCUExamination = () => {
 
         setPatient(patientRes);
         setMcuData(mcuRes);
+        loadPenunjangAttachments(id);
         setLoading(false);
       })
       .catch((err) => {
@@ -214,6 +231,41 @@ export const MCUExamination = () => {
   const handleNextTab = () => {
     if (!isLastTab) {
       setActiveTab(availableTabs[currentIndex + 1]);
+    }
+  };
+
+  const handleUploadPenunjangFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0 || !id) return;
+
+    try {
+      setUploadingFile(true);
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (typeof attachmentService?.uploadAttachment === 'function') {
+          await attachmentService.uploadAttachment(id, file, 'PENUNJANG');
+        }
+      }
+      await loadPenunjangAttachments(id);
+    } catch (err: any) {
+      console.error('Gagal mengunggah file penunjang:', err);
+      alert('Gagal mengunggah file: ' + (err?.message || 'Terjadi kesalahan'));
+    } finally {
+      setUploadingFile(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleDeletePenunjangFile = async (attachmentId: string) => {
+    if (!confirm('Apakah Anda yakin ingin menghapus file lampiran penunjang ini?')) return;
+    try {
+      if (typeof attachmentService?.deleteAttachment === 'function') {
+        await attachmentService.deleteAttachment(attachmentId);
+      }
+      if (id) await loadPenunjangAttachments(id);
+    } catch (err: any) {
+      console.error('Gagal menghapus file penunjang:', err);
+      alert('Gagal menghapus file');
     }
   };
 
@@ -737,7 +789,6 @@ export const MCUExamination = () => {
             <span className="text-xs font-black text-blue-600">{calculateProgress()}% Selesai</span>
           </div>
 
-          {/* Tombol Cetak PDF Hasil */}
           <button
             type="button"
             onClick={() => navigate(`/mcu-results/${id}`)}
@@ -746,7 +797,6 @@ export const MCUExamination = () => {
             <Printer className="w-4 h-4" /> Cetak PDF
           </button>
 
-          {/* Tombol Simpan */}
           <button
             type="button"
             onClick={handleManualSave}
@@ -1734,10 +1784,53 @@ export const MCUExamination = () => {
         {/* G. TAB PEMERIKSAAN PENUNJANG */}
         {activeTab === 'supporting' && (
           <div className="space-y-6">
-            <div className="border-b pb-2">
-              <h3 className="font-bold text-gray-900 text-sm">Pemeriksaan Penunjang Medis</h3>
-              <p className="text-xs text-gray-500 mt-0.5">Catat status dan temuan hasil pemeriksaan penunjang utama serta pemeriksaan tambahan jika ada.</p>
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b pb-3">
+              <div>
+                <h3 className="font-bold text-gray-900 text-sm">Pemeriksaan Penunjang Medis</h3>
+                <p className="text-xs text-gray-500 mt-0.5">Catat status hasil pemeriksaan penunjang serta unggah berkas fisik (EKG, Spirometri, dll).</p>
+              </div>
+
+              {/* UPLOAD HASIL BERKAS PENUNJANG */}
+              <label className="px-3.5 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 font-bold text-xs rounded-xl cursor-pointer inline-flex items-center gap-1.5 transition-all shadow-xs border border-blue-200">
+                <Upload className="w-4 h-4" />
+                <span>{uploadingFile ? 'Mengunggah...' : 'Upload Berkas Penunjang (PDF/Gambar)'}</span>
+                <input
+                  type="file"
+                  accept="image/*,application/pdf"
+                  multiple
+                  disabled={uploadingFile}
+                  onChange={handleUploadPenunjangFile}
+                  className="hidden"
+                />
+              </label>
             </div>
+
+            {/* DAFTAR BERKAS PENUNJANG TERUNGGAH */}
+            {penunjangAttachments.length > 0 && (
+              <div className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100 space-y-2">
+                <span className="text-xs font-bold text-blue-900 block">
+                  Lampiran Berkas Penunjang Ter-upload ({penunjangAttachments.length}):
+                </span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {penunjangAttachments.map((file, idx) => (
+                    <div key={file.id || idx} className="flex items-center justify-between p-2.5 bg-white border border-gray-200 rounded-xl text-xs shadow-2xs">
+                      <div className="flex items-center gap-2 truncate pr-2">
+                        <FileText className="w-4 h-4 text-blue-600 shrink-0" />
+                        <span className="font-medium text-gray-800 truncate">{file.fileName || `Berkas Penunjang ${idx + 1}`}</span>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleDeletePenunjangFile(file.id)}
+                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer shrink-0"
+                        title="Hapus Berkas"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm border-collapse">

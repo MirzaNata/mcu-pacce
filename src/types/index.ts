@@ -179,3 +179,13 @@ export interface LabResult {
   fileDataUrl?: string; // Tambahkan ini
   fileData?: string;    // Tambahkan ini
 }
+
+export interface Attachment {
+  id: string;
+  patientId: string;
+  fileName: string;
+  fileUrl: string;
+  fileType?: string;
+  category?: 'PENUNJANG' | 'LAB' | 'RADIOLOGY' | string;
+  createdAt?: string;
+}

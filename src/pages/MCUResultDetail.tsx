@@ -19,13 +19,14 @@ import {
   Coffee,
   Eye as VisionIcon,
   FlaskConical,
-  Scan
+  Scan,
 } from 'lucide-react';
 import { mcuService } from '../services/mcuService';
 import { patientService } from '../services/patientService';
 import { labService } from '../services/labService';
 import { radiologyService } from '../services/radiologyService';
-import type { Patient, MCURecord } from '../types';
+import { attachmentService } from '../services/attachmentService';
+import type { Patient, MCURecord, Attachment } from '../types';
 import { PdfAttachmentRenderer } from '../components/PdfAttachmentRenderer';
 
 const ANAMNESIS_COMPLAINTS_MAP: Record<string, string> = {
@@ -121,6 +122,7 @@ export const MCUResultDetail = () => {
   const [mcuData, setMcuData] = useState<MCURecord | null>(null);
   const [labFileUrl, setLabFileUrl] = useState<string | null>(null);
   const [radiologyFileUrl, setRadiologyFileUrl] = useState<string | null>(null);
+  const [penunjangAttachments, setPenunjangAttachments] = useState<Attachment[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
   useEffect(() => {
@@ -132,13 +134,17 @@ export const MCUResultDetail = () => {
         mcuService.getMCUByPatientId(id).then((res) => res || mcuService.initializeOrGetMCU(id)),
         labService.getLabDocumentUrl(id),
         radiologyService.getRadiologyDocumentUrl(id),
+        typeof attachmentService?.getAttachmentsByPatientId === 'function'
+          ? attachmentService.getAttachmentsByPatientId(id, 'PENUNJANG')
+          : Promise.resolve([]),
       ])
-        .then(([patientRes, mcuRes, labUrl, radUrl]) => {
+        .then(([patientRes, mcuRes, labUrl, radUrl, penunjangList]) => {
           if (isMounted) {
             setPatient(patientRes);
             setMcuData(mcuRes);
             setLabFileUrl(labUrl);
             setRadiologyFileUrl(radUrl);
+            setPenunjangAttachments(penunjangList || []);
             setLoading(false);
           }
         })
@@ -278,7 +284,7 @@ export const MCUResultDetail = () => {
           </div>
           <div>
             <span className="text-gray-400 block font-medium">No. MCU / NIK</span>
-            <span className="font-mono font-bold text-blue-600">{patient.mcuNumber} / {String(pAny.nik || pAny.id || '-')}</span>
+            <span className="font-mono font-bold text-blue-600">{patient.mcuNumber} / {String(patient.nik || pAny.identityNumber || pAny.id || '-')}</span>
           </div>
           <div>
             <span className="text-gray-400 block font-medium">Jenis Kelamin / Usia</span>
@@ -288,7 +294,7 @@ export const MCUResultDetail = () => {
           </div>
           <div>
             <span className="text-gray-400 block font-medium">Perusahaan / Instansi</span>
-            <span className="font-bold text-gray-800">{String(pAny.company || '-')}</span>
+            <span className="font-bold text-gray-800">{String(patient.company || patient.companyName || '-')}</span>
           </div>
         </div>
       </div>
@@ -730,7 +736,7 @@ export const MCUResultDetail = () => {
                         No. Telp.<br/><span className="text-[10px] font-normal italic text-gray-500">Phone Number</span>
                       </td>
                       <td className="p-2">
-                        : {patient?.phone || patient?.phoneNumber || (patient as any)?.phone_number || '-'}
+                        : {patient.phone || patient.phoneNumber || (patient as any).phone_number || '-'}
                       </td>
                     </tr>
                     <tr>
@@ -738,7 +744,7 @@ export const MCUResultDetail = () => {
                         Alamat<br/><span className="text-[10px] font-normal italic text-gray-500">Address</span>
                       </td>
                       <td colSpan={3} className="p-2">
-                        : {patient?.address || (patient as any)?.alamat || '-'}
+                        : {patient.address || (patient as any).alamat || '-'}
                       </td>
                     </tr>
                   </tbody>
@@ -1045,7 +1051,7 @@ export const MCUResultDetail = () => {
                 </div>
               </div>
 
-              {/* HALAMAN LAMPIRAN 1: HASIL LABORATORIUM (PDF Multi-Halaman / Gambar) */}
+              {/* HALAMAN LAMPIRAN 1: HASIL LABORATORIUM */}
               {labFileUrl && (
                 isPdfUrl(labFileUrl) ? (
                   <PdfAttachmentRenderer
@@ -1068,7 +1074,7 @@ export const MCUResultDetail = () => {
                 )
               )}
 
-              {/* HALAMAN LAMPIRAN 2: HASIL RADIOLOGI / RONTGEN (PDF Multi-Halaman / Gambar) */}
+              {/* HALAMAN LAMPIRAN 2: HASIL RADIOLOGI / RONTGEN */}
               {radiologyFileUrl && (
                 isPdfUrl(radiologyFileUrl) ? (
                   <PdfAttachmentRenderer
@@ -1091,12 +1097,48 @@ export const MCUResultDetail = () => {
                 )
               )}
 
+              {/* HALAMAN LAMPIRAN 3: PEMERIKSAAN PENUNJANG (KONDISIONAL) */}
+              {penunjangAttachments.length > 0 && (
+                <div className="print-attachment-page space-y-4">
+                  <div className="font-bold text-xs bg-gray-200 p-2 border border-black uppercase flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      <Stethoscope className="w-4 h-4" /> Lampiran III: Hasil Pemeriksaan Penunjang (EKG / Spirometri / dll)
+                    </span>
+                    <span className="text-[10px] text-gray-600 font-normal">
+                      Pasien: {patient.fullName} ({patient.mcuNumber})
+                    </span>
+                  </div>
+
+                  <div className="space-y-6">
+                    {penunjangAttachments.map((file, idx) => (
+                      <div key={file.id || idx} className="space-y-2 border border-black p-2 bg-white">
+                        <div className="font-bold text-[11px] text-gray-800 border-b border-black pb-1">
+                          Berkas {idx + 1}: {file.fileName || 'Hasil Pemeriksaan Penunjang'}
+                        </div>
+                        {isPdfUrl(file.fileUrl) ? (
+                          <PdfAttachmentRenderer
+                            pdfUrl={file.fileUrl}
+                            title={`Lampiran Penunjang: ${file.fileName || `Berkas ${idx + 1}`}`}
+                            patientName={patient.fullName}
+                            mcuNumber={patient.mcuNumber || '-'}
+                          />
+                        ) : (
+                          <div className="attachment-container">
+                            <img src={file.fileUrl} alt={file.fileName || 'Hasil Penunjang'} className="attachment-img" />
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
             </div>
           </div>
         </div>
       )}
 
-      {/* CSS KHUSUS MEDIA PRINT A4 PRESISI UNTUK GAMBAR (JPG/PNG) */}
+      {/* CSS KHUSUS MEDIA PRINT A4 PRESISI */}
       <style>{`
         .print-attachment-page {
            margin-top: 2rem;
@@ -1153,13 +1195,12 @@ export const MCUResultDetail = () => {
             border: none !important;
           }
           
-          /* Penguncian Kontainer Lampiran */
           .print-attachment-page {
             break-before: page !important;
             page-break-before: always !important;
             break-inside: avoid !important;
             page-break-inside: avoid !important;
-            min-height: 270mm !important; /* Pas A4 */
+            min-height: 270mm !important;
             width: 100% !important;
             margin: 0 !important;
             padding: 0 !important;
@@ -1169,7 +1210,7 @@ export const MCUResultDetail = () => {
           }
           .attachment-container {
             flex-grow: 1 !important;
-            height: 260mm !important; /* Area sisa untuk gambar */
+            height: 260mm !important;
             width: 100% !important;
             border: none !important;
             padding: 0 !important;
@@ -1185,13 +1226,12 @@ export const MCUResultDetail = () => {
             background-color: white !important;
           }
           
-          /* Format Paling Krusial Untuk File JPG/PNG */
           .attachment-img {
             width: 100% !important;
             height: 100% !important;
             max-width: 100% !important;
             max-height: 260mm !important;
-            object-fit: contain !important; /* Memastikan gambar tidak terpotong dan rasionya terjaga proporsional */
+            object-fit: contain !important;
             margin: auto !important;
             display: block !important;
           }
