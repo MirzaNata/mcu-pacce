@@ -186,6 +186,7 @@ export interface Attachment {
   fileName: string;
   fileUrl: string;
   fileType?: string;
-  category?: 'PENUNJANG' | 'LAB' | 'RADIOLOGY' | string;
+  category?: string;
+  examType?: string;
   createdAt?: string;
 }

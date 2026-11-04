@@ -1,5 +1,3 @@
-// CATATAN: Jika nama file supabase Anda adalah 'supabaseClient.ts', 
-// ubah '../lib/supabase' menjadi '../lib/supabaseClient'
 import { supabase } from '../lib/supabaseClient';
 import type { Attachment } from '../types';
 
@@ -17,7 +15,6 @@ export const attachmentService = {
         return [];
       }
 
-      // Menambahkan (item: any) untuk mencegah error ts(7006)
       return (data || []).map((item: any) => ({
         id: item.id,
         patientId: item.patient_id,
@@ -25,6 +22,7 @@ export const attachmentService = {
         fileUrl: item.file_url,
         fileType: item.file_type,
         category: item.category,
+        examType: item.exam_type || item.file_type, // Menyimpan jenis pemeriksaan
         createdAt: item.created_at,
       }));
     } catch (err) {
@@ -33,18 +31,21 @@ export const attachmentService = {
     }
   },
 
-  async uploadAttachment(patientId: string, file: File, category: string = 'PENUNJANG'): Promise<Attachment | null> {
+  async uploadAttachment(
+    patientId: string, 
+    file: File, 
+    category: string = 'PENUNJANG',
+    examType?: string
+  ): Promise<Attachment | null> {
     try {
       const fileExt = file.name.split('.').pop();
-      const filePath = `mcu-attachments/${patientId}/${Date.now()}_${Math.random().toString(36).substring(2, 7)}.${fileExt}`;
+      const filePath = `mcu-attachments/${patientId}/${examType || 'general'}_${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('mcu-files')
         .upload(filePath, file);
 
-      if (uploadError) {
-        throw uploadError;
-      }
+      if (uploadError) throw uploadError;
 
       const { data: publicUrlData } = supabase.storage
         .from('mcu-files')
@@ -59,16 +60,14 @@ export const attachmentService = {
             patient_id: patientId,
             file_name: file.name,
             file_url: fileUrl,
-            file_type: file.type,
+            file_type: examType || file.type,
             category: category,
           },
         ])
         .select()
         .single();
 
-      if (dbError) {
-        throw dbError;
-      }
+      if (dbError) throw dbError;
 
       return {
         id: data.id,
@@ -77,6 +76,7 @@ export const attachmentService = {
         fileUrl: data.file_url,
         fileType: data.file_type,
         category: data.category,
+        examType: data.file_type,
         createdAt: data.created_at,
       };
     } catch (err) {
@@ -92,13 +92,9 @@ export const attachmentService = {
         .delete()
         .eq('id', attachmentId);
 
-      if (error) {
-        console.error('Gagal menghapus lampiran:', error);
-        return false;
-      }
+      if (error) return false;
       return true;
     } catch (err) {
-      console.error('Error attachmentService.deleteAttachment:', err);
       return false;
     }
   },

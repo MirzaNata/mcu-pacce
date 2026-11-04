@@ -22,7 +22,6 @@ import {
   Building2,
   Calendar,
   Printer,
-  FileText
 } from 'lucide-react';
 import { mcuService } from '../services/mcuService';
 import { patientService } from '../services/patientService';
@@ -231,28 +230,6 @@ export const MCUExamination = () => {
   const handleNextTab = () => {
     if (!isLastTab) {
       setActiveTab(availableTabs[currentIndex + 1]);
-    }
-  };
-
-  const handleUploadPenunjangFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = e.target.files;
-    if (!files || files.length === 0 || !id) return;
-
-    try {
-      setUploadingFile(true);
-      for (let i = 0; i < files.length; i++) {
-        const file = files[i];
-        if (typeof attachmentService?.uploadAttachment === 'function') {
-          await attachmentService.uploadAttachment(id, file, 'PENUNJANG');
-        }
-      }
-      await loadPenunjangAttachments(id);
-    } catch (err: any) {
-      console.error('Gagal mengunggah file penunjang:', err);
-      alert('Gagal mengunggah file: ' + (err?.message || 'Terjadi kesalahan'));
-    } finally {
-      setUploadingFile(false);
-      e.target.value = '';
     }
   };
 
@@ -931,7 +908,6 @@ export const MCUExamination = () => {
                       type="number"
                       value={mcuData.generalExamination?.systolic ?? ''}
                       onChange={(e) => handleVitalSignChange('systolic', e.target.value === '' ? '' : Number(e.target.value))}
-                      onWheel={(e) => e.currentTarget.blur()}
                       className="w-full p-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-hidden focus:ring-2 focus:ring-blue-500"
                       placeholder="mis. 120"
                     />
@@ -943,7 +919,6 @@ export const MCUExamination = () => {
                       type="number"
                       value={mcuData.generalExamination?.diastolic ?? ''}
                       onChange={(e) => handleVitalSignChange('diastolic', e.target.value === '' ? '' : Number(e.target.value))}
-                      onWheel={(e) => e.currentTarget.blur()}
                       className="w-full p-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-hidden focus:ring-2 focus:ring-blue-500"
                       placeholder="mis. 80"
                     />
@@ -959,7 +934,6 @@ export const MCUExamination = () => {
                   type="number"
                   value={mcuData.generalExamination?.pulse ?? (mcuData.generalExamination as any)?.pulseRate ?? ''}
                   onChange={(e) => handleVitalSignChange('pulse', e.target.value === '' ? '' : Number(e.target.value))}
-                  onWheel={(e) => e.currentTarget.blur()}
                   className="w-full p-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-hidden focus:ring-2 focus:ring-blue-500"
                   placeholder="mis. 80"
                 />
@@ -973,7 +947,6 @@ export const MCUExamination = () => {
                   type="number"
                   value={mcuData.generalExamination?.respiratoryRate ?? ''}
                   onChange={(e) => handleVitalSignChange('respiratoryRate', e.target.value === '' ? '' : Number(e.target.value))}
-                  onWheel={(e) => e.currentTarget.blur()}
                   className="w-full p-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-hidden focus:ring-2 focus:ring-blue-500"
                   placeholder="mis. 18"
                 />
@@ -988,7 +961,6 @@ export const MCUExamination = () => {
                   step="0.1"
                   value={mcuData.generalExamination?.temperature ?? (mcuData.generalExamination as any)?.bodyTemperature ?? ''}
                   onChange={(e) => handleVitalSignChange('temperature', e.target.value === '' ? '' : Number(e.target.value))}
-                  onWheel={(e) => e.currentTarget.blur()}
                   className="w-full p-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-hidden focus:ring-2 focus:ring-blue-500"
                   placeholder="mis. 36.5"
                 />
@@ -1002,7 +974,6 @@ export const MCUExamination = () => {
                   type="number"
                   value={mcuData.generalExamination?.oxygenSaturation ?? ''}
                   onChange={(e) => handleVitalSignChange('oxygenSaturation', e.target.value === '' ? '' : Number(e.target.value))}
-                  onWheel={(e) => e.currentTarget.blur()}
                   className="w-full p-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-hidden focus:ring-2 focus:ring-blue-500"
                   placeholder="mis. 98"
                 />
@@ -1017,7 +988,6 @@ export const MCUExamination = () => {
                   step="0.1"
                   value={mcuData.generalExamination?.height ?? ''}
                   onChange={(e) => handleVitalSignChange('height', e.target.value === '' ? '' : Number(e.target.value))}
-                  onWheel={(e) => e.currentTarget.blur()}
                   className="w-full p-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-hidden focus:ring-2 focus:ring-blue-500"
                   placeholder="mis. 170"
                 />
@@ -1032,7 +1002,6 @@ export const MCUExamination = () => {
                   step="0.1"
                   value={mcuData.generalExamination?.weight ?? ''}
                   onChange={(e) => handleVitalSignChange('weight', e.target.value === '' ? '' : Number(e.target.value))}
-                  onWheel={(e) => e.currentTarget.blur()}
                   className="w-full p-2.5 bg-white border border-gray-200 rounded-xl text-xs font-bold outline-hidden focus:ring-2 focus:ring-blue-500"
                   placeholder="mis. 65"
                 />
@@ -1098,7 +1067,7 @@ export const MCUExamination = () => {
             </div>
 
             {mcuData.anamnesis?.complaints?.includes('lainnya') && (
-              <div className="p-4 bg-blue-50/60 rounded-2xl border border-blue-200 space-y-2 animate-fade-in">
+              <div className="p-4 bg-blue-50/60 rounded-2xl border border-blue-200 space-y-2">
                 <label className="block text-xs font-bold text-blue-900">
                   Jelaskan Keluhan Lainnya <span className="text-red-500">*</span>
                 </label>
@@ -1334,7 +1303,6 @@ export const MCUExamination = () => {
                         type="number"
                         value={mcuData.lifestyle?.smoking?.cigarettesPerDay || ''}
                         onChange={(e) => handleLifestyleChange('smoking', 'cigarettesPerDay', e.target.value === '' ? '' : Number(e.target.value))}
-                        onWheel={(e) => e.currentTarget.blur()}
                         className="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs outline-hidden focus:ring-2 focus:ring-blue-500"
                         placeholder="mis. 10"
                       />
@@ -1345,7 +1313,6 @@ export const MCUExamination = () => {
                         type="number"
                         value={mcuData.lifestyle?.smoking?.durationYears || ''}
                         onChange={(e) => handleLifestyleChange('smoking', 'durationYears', e.target.value === '' ? '' : Number(e.target.value))}
-                        onWheel={(e) => e.currentTarget.blur()}
                         className="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs outline-hidden focus:ring-2 focus:ring-blue-500"
                         placeholder="mis. 5"
                       />
@@ -1403,7 +1370,6 @@ export const MCUExamination = () => {
                         type="number"
                         value={mcuData.lifestyle?.alcohol?.bottlesPerDay || ''}
                         onChange={(e) => handleLifestyleChange('alcohol', 'bottlesPerDay', e.target.value === '' ? '' : Number(e.target.value))}
-                        onWheel={(e) => e.currentTarget.blur()}
                         className="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs outline-hidden focus:ring-2 focus:ring-blue-500"
                         placeholder="mis. 1"
                       />
@@ -1414,7 +1380,6 @@ export const MCUExamination = () => {
                         type="number"
                         value={mcuData.lifestyle?.alcohol?.durationYears || ''}
                         onChange={(e) => handleLifestyleChange('alcohol', 'durationYears', e.target.value === '' ? '' : Number(e.target.value))}
-                        onWheel={(e) => e.currentTarget.blur()}
                         className="w-full p-2 bg-white border border-gray-200 rounded-lg text-xs outline-hidden focus:ring-2 focus:ring-blue-500"
                         placeholder="mis. 2"
                       />
@@ -1784,75 +1749,39 @@ export const MCUExamination = () => {
         {/* G. TAB PEMERIKSAAN PENUNJANG */}
         {activeTab === 'supporting' && (
           <div className="space-y-6">
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 border-b pb-3">
-              <div>
-                <h3 className="font-bold text-gray-900 text-sm">Pemeriksaan Penunjang Medis</h3>
-                <p className="text-xs text-gray-500 mt-0.5">Catat status hasil pemeriksaan penunjang serta unggah berkas fisik (EKG, Spirometri, dll).</p>
-              </div>
-
-              {/* UPLOAD HASIL BERKAS PENUNJANG */}
-              <label className="px-3.5 py-2 bg-blue-50 text-blue-600 hover:bg-blue-100 font-bold text-xs rounded-xl cursor-pointer inline-flex items-center gap-1.5 transition-all shadow-xs border border-blue-200">
-                <Upload className="w-4 h-4" />
-                <span>{uploadingFile ? 'Mengunggah...' : 'Upload Berkas Penunjang (PDF/Gambar)'}</span>
-                <input
-                  type="file"
-                  accept="image/*,application/pdf"
-                  multiple
-                  disabled={uploadingFile}
-                  onChange={handleUploadPenunjangFile}
-                  className="hidden"
-                />
-              </label>
+            <div className="border-b pb-3">
+              <h3 className="font-bold text-gray-900 text-sm">Pemeriksaan Penunjang Medis</h3>
+              <p className="text-xs text-gray-500 mt-0.5">Catat status hasil pemeriksaan serta unggah berkas fisik/PDF pada masing-masing jenis pemeriksaan.</p>
             </div>
-
-            {/* DAFTAR BERKAS PENUNJANG TERUNGGAH */}
-            {penunjangAttachments.length > 0 && (
-              <div className="p-4 bg-blue-50/50 rounded-2xl border border-blue-100 space-y-2">
-                <span className="text-xs font-bold text-blue-900 block">
-                  Lampiran Berkas Penunjang Ter-upload ({penunjangAttachments.length}):
-                </span>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                  {penunjangAttachments.map((file, idx) => (
-                    <div key={file.id || idx} className="flex items-center justify-between p-2.5 bg-white border border-gray-200 rounded-xl text-xs shadow-2xs">
-                      <div className="flex items-center gap-2 truncate pr-2">
-                        <FileText className="w-4 h-4 text-blue-600 shrink-0" />
-                        <span className="font-medium text-gray-800 truncate">{file.fileName || `Berkas Penunjang ${idx + 1}`}</span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => handleDeletePenunjangFile(file.id)}
-                        className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors cursor-pointer shrink-0"
-                        title="Hapus Berkas"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
 
             <div className="overflow-x-auto">
               <table className="w-full text-left text-sm border-collapse">
                 <thead>
                   <tr className="bg-gray-50 border-y border-gray-200 text-gray-700 font-bold text-xs uppercase">
-                    <th className="p-3 w-1/3">Pemeriksaan Utama</th>
-                    <th className="p-3 text-center w-1/3">Status Hasil</th>
-                    <th className="p-3 w-1/3">Catatan / Temuan Hasil</th>
+                    <th className="p-3 w-1/4">Pemeriksaan Utama</th>
+                    <th className="p-3 text-center w-1/4">Status Hasil</th>
+                    <th className="p-3 w-1/4">Catatan / Temuan Hasil</th>
+                    <th className="p-3 text-center w-1/4">Berkas Lampiran</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-100">
                   {SUPPORTING_EXAM_ITEMS.map((item) => {
                     const data = (mcuData.supportingExamination?.mainExams?.[item.id] || {}) as { status?: string; notes?: string };
+                    const attachedFiles = penunjangAttachments.filter(
+                      (att) => att.examType === item.id || att.fileType === item.id
+                    );
+
                     return (
                       <tr key={item.id} className="hover:bg-gray-50/60 transition-colors">
                         <td className="p-3 font-semibold text-gray-800 text-xs">{item.label}</td>
+                        
+                        {/* STATUS HASIL */}
                         <td className="p-3 text-center">
                           <div className="inline-flex rounded-lg border border-gray-200 bg-gray-50 p-1 gap-1">
                             <button
                               type="button"
                               onClick={() => handleMainSupportingExamChange(item.id, 'status', 'Normal')}
-                              className={`px-3.5 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                              className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
                                 data.status === 'Normal'
                                   ? 'bg-green-600 text-white shadow-xs'
                                   : 'text-gray-600 hover:bg-gray-200'
@@ -1863,7 +1792,7 @@ export const MCUExamination = () => {
                             <button
                               type="button"
                               onClick={() => handleMainSupportingExamChange(item.id, 'status', 'Tidak Normal')}
-                              className={`px-3.5 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
+                              className={`px-3 py-1 text-xs font-bold rounded-md transition-all cursor-pointer ${
                                 data.status === 'Tidak Normal'
                                   ? 'bg-red-600 text-white shadow-xs'
                                   : 'text-gray-600 hover:bg-gray-200'
@@ -1873,14 +1802,66 @@ export const MCUExamination = () => {
                             </button>
                           </div>
                         </td>
+
+                        {/* CATATAN */}
                         <td className="p-3">
                           <input
                             type="text"
                             value={data.notes || ''}
                             onChange={(e) => handleMainSupportingExamChange(item.id, 'notes', e.target.value)}
-                            placeholder="Catatan hasil penunjang..."
+                            placeholder="Catatan hasil..."
                             className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-xs focus:ring-2 focus:ring-blue-500 outline-hidden"
                           />
+                        </td>
+
+                        {/* TOMBOL UPLOAD PER ITEM */}
+                        <td className="p-3 text-center">
+                          <div className="flex flex-col items-center gap-1.5">
+                            {attachedFiles.length > 0 ? (
+                              <div className="space-y-1 w-full">
+                                {attachedFiles.map((file) => (
+                                  <div key={file.id} className="flex items-center justify-between p-1.5 bg-blue-50 border border-blue-200 rounded-lg text-[11px]">
+                                    <span className="truncate max-w-27.5 font-medium text-blue-900" title={file.fileName}>
+                                      {file.fileName}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleDeletePenunjangFile(file.id)}
+                                      className="text-red-500 hover:text-red-700 p-0.5 rounded cursor-pointer"
+                                      title="Hapus berkas"
+                                    >
+                                      <X className="w-3.5 h-3.5" />
+                                    </button>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <label className="px-3 py-1.5 bg-gray-100 hover:bg-blue-50 text-gray-700 hover:text-blue-600 font-bold text-[11px] rounded-lg cursor-pointer border border-gray-300 hover:border-blue-300 transition-all inline-flex items-center gap-1">
+                                <Upload className="w-3.5 h-3.5" />
+                                <span>{uploadingFile ? 'Mengunggah...' : 'Upload File'}</span>
+                                <input
+                                  type="file"
+                                  accept="image/*,application/pdf"
+                                  disabled={uploadingFile}
+                                  onChange={async (e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file && id) {
+                                      setUploadingFile(true);
+                                      try {
+                                        await attachmentService.uploadAttachment(id, file, 'PENUNJANG', item.id);
+                                        await loadPenunjangAttachments(id);
+                                      } catch (err) {
+                                        console.error('Gagal mengunggah file:', err);
+                                      } finally {
+                                        setUploadingFile(false);
+                                      }
+                                    }
+                                  }}
+                                  className="hidden"
+                                />
+                              </label>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );
