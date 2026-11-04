@@ -16,7 +16,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
   onSubmit,
   onSuccess,
 }) => {
-  const [formData, setFormData] = useState<Partial<Patient>>({
+  const [formData, setFormData] = useState<Record<string, any>>({
     fullName: '',
     nik: '',
     mcuNumber: '',
@@ -47,10 +47,28 @@ export const PatientForm: React.FC<PatientFormProps> = ({
 
   useEffect(() => {
     if (patient) {
+      const pAny = patient as any;
+      
+      // Ambil tanggal registrasi dari berbagai kemungkinan field
+      const rawRegDate = patient.registrationDate || pAny.registration_date || pAny.created_at || '';
+      const formattedRegDate = rawRegDate ? rawRegDate.split('T')[0] : new Date().toISOString().split('T')[0];
+
+      // Ambil tanggal lahir
+      const rawDob = patient.dateOfBirth || pAny.date_of_birth || '';
+      const formattedDob = rawDob ? rawDob.split('T')[0] : '';
+
       setFormData({
         ...patient,
-        company: patient.company || patient.companyName || '',
-        nik: patient.nik || (patient as any).identityNumber || '',
+        fullName: patient.fullName || pAny.full_name || '',
+        nik: patient.nik || pAny.identityNumber || pAny.identity_number || '',
+        company: patient.company || patient.companyName || pAny.company_name || '',
+        phone: patient.phone || pAny.phoneNumber || pAny.phone_number || '',
+        address: patient.address || pAny.alamat || '',
+        gender: patient.gender || pAny.jenis_kelamin || 'Laki-Laki',
+        bloodType: patient.bloodType || pAny.blood_type || '',
+        dateOfBirth: formattedDob,
+        age: patient.age || calculateAge(formattedDob),
+        registrationDate: formattedRegDate,
       });
     } else {
       setFormData({
@@ -84,16 +102,50 @@ export const PatientForm: React.FC<PatientFormProps> = ({
     setLoading(true);
 
     try {
-      let payload = { ...formData };
+      // Buat payload dengan menyelaraskan seluruh alias nama kolom Supabase/DB
+      const payload: Record<string, any> = {
+        ...formData,
+        fullName: formData.fullName,
+        full_name: formData.fullName,
+        
+        nik: formData.nik,
+        identityNumber: formData.nik,
+        identity_number: formData.nik,
+        
+        company: formData.company,
+        companyName: formData.company,
+        company_name: formData.company,
 
-      // Jika tambah peserta baru, generate No. MCU otomatis berurutan
+        // No. Telepon disinkronkan ke 3 variasi variabel
+        phone: formData.phone,
+        phoneNumber: formData.phone,
+        phone_number: formData.phone,
+
+        // Alamat disinkronkan ke 2 variasi variabel
+        address: formData.address,
+        alamat: formData.address,
+
+        // Tanggal Registrasi disinkronkan ke 2 variasi variabel
+        registrationDate: formData.registrationDate,
+        registration_date: formData.registrationDate,
+
+        dateOfBirth: formData.dateOfBirth,
+        date_of_birth: formData.dateOfBirth,
+
+        bloodType: formData.bloodType,
+        blood_type: formData.bloodType,
+      };
+
+      // Jika tambah peserta baru, buat No. MCU otomatis
       if (!patient) {
         try {
           const existingPatients = await patientService.getPatients();
           const nextNumber = (existingPatients.length + 1).toString().padStart(6, '0');
           payload.mcuNumber = `MCU-${nextNumber}`;
+          payload.mcu_number = payload.mcuNumber;
         } catch {
           payload.mcuNumber = `MCU-${Date.now().toString().slice(-6)}`;
+          payload.mcu_number = payload.mcuNumber;
         }
       }
 
@@ -150,8 +202,8 @@ export const PatientForm: React.FC<PatientFormProps> = ({
               <input
                 type="text"
                 required
-                value={formData.nik || (formData as any).identityNumber || ''}
-                onChange={(e) => setFormData({ ...formData, nik: e.target.value, identityNumber: e.target.value } as any)}
+                value={formData.nik || ''}
+                onChange={(e) => setFormData({ ...formData, nik: e.target.value })}
                 className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-hidden focus:ring-2 focus:ring-blue-500"
                 placeholder="Nomor NIK KTP/Passport"
               />
@@ -162,8 +214,8 @@ export const PatientForm: React.FC<PatientFormProps> = ({
               <input
                 type="text"
                 required
-                value={formData.company || (formData as any).companyName || ''}
-                onChange={(e) => setFormData({ ...formData, company: e.target.value, companyName: e.target.value } as any)}
+                value={formData.company || ''}
+                onChange={(e) => setFormData({ ...formData, company: e.target.value })}
                 className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-hidden focus:ring-2 focus:ring-blue-500"
                 placeholder="Nama perusahaan"
               />
@@ -173,7 +225,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
               <label className="block font-bold text-gray-700 mb-1">Jenis Kelamin *</label>
               <select
                 value={formData.gender || 'Laki-Laki'}
-                onChange={(e) => setFormData({ ...formData, gender: e.target.value as any })}
+                onChange={(e) => setFormData({ ...formData, gender: e.target.value })}
                 className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-hidden focus:ring-2 focus:ring-blue-500"
               >
                 <option value="Laki-Laki">Laki-Laki</option>
@@ -195,7 +247,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
               <label className="block font-bold text-gray-700 mb-1">Usia (Tahun)</label>
               <input
                 type="number"
-                value={formData.age !== undefined ? formData.age : ''}
+                value={formData.age !== undefined && formData.age !== null ? formData.age : ''}
                 onChange={(e) => setFormData({ ...formData, age: Number(e.target.value) || undefined })}
                 className="w-full p-2.5 bg-gray-100 border border-gray-200 rounded-xl outline-hidden focus:ring-2 focus:ring-blue-500 text-gray-700"
                 placeholder="Otomatis dari Tanggal Lahir"
