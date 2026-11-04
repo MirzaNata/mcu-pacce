@@ -31,6 +31,20 @@ export const PatientForm: React.FC<PatientFormProps> = ({
   });
   const [loading, setLoading] = useState(false);
 
+  // Hitung usia otomatis dari tanggal lahir
+  const calculateAge = (dobString: string): number | undefined => {
+    if (!dobString) return undefined;
+    const today = new Date();
+    const birthDate = new Date(dobString);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+    return age >= 0 ? age : undefined;
+  };
+
   useEffect(() => {
     if (patient) {
       setFormData({
@@ -55,14 +69,38 @@ export const PatientForm: React.FC<PatientFormProps> = ({
     }
   }, [patient]);
 
+  // Handler saat Tanggal Lahir diubah
+  const handleDateOfBirthChange = (dob: string) => {
+    const computedAge = calculateAge(dob);
+    setFormData((prev) => ({
+      ...prev,
+      dateOfBirth: dob,
+      age: computedAge !== undefined ? computedAge : prev.age,
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
+
     try {
+      let payload = { ...formData };
+
+      // Jika tambah peserta baru, generate No. MCU otomatis berurutan
+      if (!patient) {
+        try {
+          const existingPatients = await patientService.getPatients();
+          const nextNumber = (existingPatients.length + 1).toString().padStart(6, '0');
+          payload.mcuNumber = `MCU-${nextNumber}`;
+        } catch {
+          payload.mcuNumber = `MCU-${Date.now().toString().slice(-6)}`;
+        }
+      }
+
       if (patient && patient.id) {
-        await patientService.updatePatient(patient.id, formData as Patient);
+        await patientService.updatePatient(patient.id, payload as Patient);
       } else {
-        await patientService.addPatient(formData as Patient);
+        await patientService.addPatient(payload as Patient);
       }
       
       if (onSubmit) await onSubmit();
@@ -120,17 +158,6 @@ export const PatientForm: React.FC<PatientFormProps> = ({
             </div>
 
             <div>
-              <label className="block font-bold text-gray-700 mb-1">No. MCU</label>
-              <input
-                type="text"
-                value={formData.mcuNumber || ''}
-                onChange={(e) => setFormData({ ...formData, mcuNumber: e.target.value })}
-                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-hidden focus:ring-2 focus:ring-blue-500 font-mono"
-                placeholder="Otomatis / Manual (cth: MCU-738721)"
-              />
-            </div>
-
-            <div>
               <label className="block font-bold text-gray-700 mb-1">Perusahaan / Instansi *</label>
               <input
                 type="text"
@@ -155,23 +182,23 @@ export const PatientForm: React.FC<PatientFormProps> = ({
             </div>
 
             <div>
-              <label className="block font-bold text-gray-700 mb-1">Usia (Tahun)</label>
-              <input
-                type="number"
-                value={formData.age || ''}
-                onChange={(e) => setFormData({ ...formData, age: Number(e.target.value) || undefined })}
-                className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-hidden focus:ring-2 focus:ring-blue-500"
-                placeholder="Contoh: 28"
-              />
-            </div>
-
-            <div>
               <label className="block font-bold text-gray-700 mb-1">Tanggal Lahir</label>
               <input
                 type="date"
                 value={formData.dateOfBirth || ''}
-                onChange={(e) => setFormData({ ...formData, dateOfBirth: e.target.value })}
+                onChange={(e) => handleDateOfBirthChange(e.target.value)}
                 className="w-full p-2.5 bg-gray-50 border border-gray-200 rounded-xl outline-hidden focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+
+            <div>
+              <label className="block font-bold text-gray-700 mb-1">Usia (Tahun)</label>
+              <input
+                type="number"
+                value={formData.age !== undefined ? formData.age : ''}
+                onChange={(e) => setFormData({ ...formData, age: Number(e.target.value) || undefined })}
+                className="w-full p-2.5 bg-gray-100 border border-gray-200 rounded-xl outline-hidden focus:ring-2 focus:ring-blue-500 text-gray-700"
+                placeholder="Otomatis dari Tanggal Lahir"
               />
             </div>
 
@@ -197,7 +224,7 @@ export const PatientForm: React.FC<PatientFormProps> = ({
               />
             </div>
 
-            <div>
+            <div className="md:col-span-2">
               <label className="block font-bold text-gray-700 mb-1">Tanggal Registrasi</label>
               <input
                 type="date"
