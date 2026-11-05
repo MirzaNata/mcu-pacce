@@ -237,8 +237,19 @@ export const MCUResultDetail = () => {
 
   const handlePrintDocument = (e: React.MouseEvent) => {
     e.preventDefault();
-    console.log("Memicu dialog cetak...");
-    window.print();
+    e.stopPropagation();
+    
+    // Lepaskan fokus dari elemen/plugin PDF yang mungkin menahan proses cetak
+    if (document.activeElement instanceof HTMLElement) {
+      document.activeElement.blur();
+    }
+    
+    window.focus(); // Paksa fokus ke layar utama
+    
+    // Beri sedikit jeda agar browser siap
+    setTimeout(() => {
+      window.print();
+    }, 150);
   };
 
   return (
@@ -1127,17 +1138,14 @@ export const MCUResultDetail = () => {
                               className="max-w-full h-auto max-h-225 print:max-h-[250mm] object-contain"
                             />
                           ) : (
-                            <object
-                              data={`${file.fileUrl}#toolbar=0&navpanes=0&scrollbar=0`}
-                              type="application/pdf"
-                              className="w-full h-200 print:h-[250mm] border-0"
-                            >
-                              <iframe
-                                src={`${file.fileUrl}#toolbar=0&navpanes=0&scrollbar=0`}
-                                className="w-full h-200 print:h-[250mm] border-0"
-                                title={file.fileName}
+                            <div className="w-full">
+                              <PdfAttachmentRenderer
+                                pdfUrl={file.fileUrl}
+                                title={`Lampiran Penunjang: ${file.examType ? file.examType.toUpperCase() : file.fileName}`}
+                                patientName={patient.fullName}
+                                mcuNumber={patient.mcuNumber || '-'} 
                               />
-                            </object>
+                            </div>
                           )}
                         </div>
                       </div>
