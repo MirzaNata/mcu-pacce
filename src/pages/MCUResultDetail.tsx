@@ -1106,8 +1106,9 @@ export const MCUResultDetail = () => {
 
               {/* HALAMAN LAMPIRAN 3: PEMERIKSAAN PENUNJANG (KONDISIONAL) */}
               {penunjangAttachments.length > 0 && (
-                <div className="mt-8 space-y-6">
-                  <h3 className="text-sm font-bold text-gray-900 border-b-2 border-gray-900 pb-1 uppercase tracking-wider">
+                <div className="mt-8 space-y-6 print:mt-0 print:space-y-0 print:block">
+                  {/* Tambahkan print:hidden di sini agar judul tidak membuat halaman kosong saat cetak PDF */}
+                  <h3 className="text-sm font-bold text-gray-900 border-b-2 border-gray-900 pb-1 uppercase tracking-wider print:hidden">
                     Lampiran Hasil Pemeriksaan Penunjang
                   </h3>
 
