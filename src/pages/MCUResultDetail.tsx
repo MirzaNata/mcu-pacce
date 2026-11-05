@@ -621,10 +621,10 @@ export const MCUResultDetail = () => {
 
       {/* MODAL PREVIEW PDF & CETAK LAPORAN BILINGUAL LENGKAP STANDAR PERUSAHAAN */}
       {showPreview && (
-        <div className="fixed inset-0 z-50 bg-black/70 flex items-start justify-center p-4 overflow-y-auto print:p-0 print:bg-white print:static">
-          <div className="bg-white rounded-2xl max-w-4xl w-full my-6 p-8 shadow-2xl relative space-y-6 print:m-0 print:p-0 print:shadow-none print:w-full text-black">
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4 overflow-y-auto print:static print:p-0 print:bg-transparent print:z-auto">
+          <div className="bg-white rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto p-8 shadow-2xl relative space-y-6 print:max-h-none print:overflow-visible print:w-full print:max-w-none print:shadow-none print:rounded-none print:m-0 print:p-0 text-black">
             
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b pb-4 print:hidden">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 border-b pb-4 sticky top-0 bg-white z-10 print:hidden">
               <div className="flex items-center gap-2">
                 <Printer className="w-5 h-5 text-blue-600" />
                 <h2 className="text-base font-bold text-gray-900">Preview Laporan MCU Resmi (Standar Perusahaan)</h2>
