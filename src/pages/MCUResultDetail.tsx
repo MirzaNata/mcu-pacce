@@ -1116,22 +1116,41 @@ export const MCUResultDetail = () => {
                     file.fileType?.startsWith('image/') ||
                     file.fileUrl?.match(/\.(jpeg|jpg|gif|png|webp)$/i) != null;
 
-                  // JIKA FILE ADALAH PDF
+                  // --- 1. LOGIKA MENCARI NAMA ASLI PEMERIKSAAN ---
+                  let examDisplayName = file.examType || 'PENUNJANG';
+                  
+                  // Jika ID berawalan ADD-EXAM atau sejenisnya, cari nama aslinya di data MCU
+                  if (mcuData.supportingExamination?.additionalExams) {
+                    const matchedExam = mcuData.supportingExamination.additionalExams.find(
+                      (ex) => ex.id === file.examType
+                    );
+                    // Jika ketemu, ganti dengan nama aslinya
+                    if (matchedExam && matchedExam.name) {
+                      examDisplayName = matchedExam.name;
+                    }
+                  }
+                  
+                  // Jadikan huruf kapital semua agar rapi
+                  examDisplayName = examDisplayName.toUpperCase();
+                  // ----------------------------------------------
+
+                  // --- 2. JIKA FILE ADALAH PDF ---
                   if (!isImage) {
                     return (
                       <div key={file.id} className="w-full mb-6">
-                        {/* Judul ini HANYA tampil di layar web, disembunyikan saat print karena PdfAttachmentRenderer sudah punya header cetak sendiri */}
+                        {/* Header Web */}
                         <div className="print:hidden mb-3 pb-1 border-b border-gray-300 flex justify-between items-center">
                           <span className="font-bold text-xs text-gray-800 uppercase">
-                            LAMPIRAN {index + 1}: {file.examType ? file.examType.toUpperCase() : 'PENUNJANG'}
+                            LAMPIRAN {index + 1}: {examDisplayName}
                           </span>
                           <span className="text-[11px] text-gray-500 font-medium">{file.fileName}</span>
                         </div>
                         
+                        {/* Header Cetak PDF */}
                         <div className="w-full">
                           <PdfAttachmentRenderer
                             pdfUrl={file.fileUrl}
-                            title={`Lampiran Penunjang: ${file.examType ? file.examType.toUpperCase() : 'EKG'}`}
+                            title={`Lampiran Penunjang: ${examDisplayName}`}
                             patientName={patient.fullName}
                             mcuNumber={patient.mcuNumber || '-'} 
                           />
@@ -1140,7 +1159,7 @@ export const MCUResultDetail = () => {
                     );
                   }
 
-                  // JIKA FILE ADALAH GAMBAR (TETAP SEPERTI SEMULA)
+                  // --- 3. JIKA FILE ADALAH GAMBAR ---
                   return (
                     <div
                       key={file.id}
@@ -1148,7 +1167,7 @@ export const MCUResultDetail = () => {
                     >
                       <div className="mb-3 pb-1 border-b border-gray-300 flex justify-between items-center">
                         <span className="font-bold text-xs text-gray-800 uppercase">
-                          LAMPIRAN {index + 1}: {file.examType ? file.examType.toUpperCase() : 'PENUNJANG'}
+                          LAMPIRAN {index + 1}: {examDisplayName}
                         </span>
                         <span className="text-[11px] text-gray-500 font-medium">{file.fileName}</span>
                       </div>
