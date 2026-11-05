@@ -171,16 +171,6 @@ export const MCUResultDetail = () => {
   const pAny = patient as unknown as Record<string, unknown>;
   const docAny = (mcuData.doctorConclusion || {}) as unknown as Record<string, unknown>;
 
-  const handlePrint = () => {
-    if (document.activeElement instanceof HTMLElement) {
-      document.activeElement.blur();
-    }
-    window.focus();
-    setTimeout(() => {
-      window.print();
-    }, 200);
-  };
-
   const isPdfUrl = (url: string | null) => {
     if (!url) return false;
     return url.toLowerCase().includes('.pdf');
@@ -633,7 +623,7 @@ export const MCUResultDetail = () => {
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
-                  onClick={handlePrint}
+                  onClick={() => window.print()}
                   className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer active:scale-95"
                 >
                   <Printer className="w-4 h-4" /> Cetak / Simpan PDF
