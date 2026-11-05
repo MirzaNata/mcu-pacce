@@ -1112,45 +1112,57 @@ export const MCUResultDetail = () => {
                   </h3>
 
                   {penunjangAttachments.map((file, index) => {
-                    const isImage =
-                      file.fileType?.startsWith('image/') ||
-                      file.fileUrl?.match(/\.(jpeg|jpg|gif|png|webp)$/i) != null;
+                  const isImage =
+                    file.fileType?.startsWith('image/') ||
+                    file.fileUrl?.match(/\.(jpeg|jpg|gif|png|webp)$/i) != null;
 
+                  // JIKA FILE ADALAH PDF
+                  if (!isImage) {
                     return (
-                      <div
-                        key={file.id}
-                        className="print:break-before-page border border-gray-200 print:border-none rounded-xl p-4 print:p-0 mb-6"
-                      >
-                        {/* JUDUL PEMERIKSAAN */}
-                        <div className="mb-3 pb-1 border-b border-gray-300 flex justify-between items-center">
+                      <div key={file.id} className="w-full mb-6">
+                        {/* Judul ini HANYA tampil di layar web, disembunyikan saat print karena PdfAttachmentRenderer sudah punya header cetak sendiri */}
+                        <div className="print:hidden mb-3 pb-1 border-b border-gray-300 flex justify-between items-center">
                           <span className="font-bold text-xs text-gray-800 uppercase">
                             LAMPIRAN {index + 1}: {file.examType ? file.examType.toUpperCase() : 'PENUNJANG'}
                           </span>
                           <span className="text-[11px] text-gray-500 font-medium">{file.fileName}</span>
                         </div>
-
-                        {/* DISPLAY VISUAL BERKAS */}
-                        <div className="flex justify-center items-center w-full bg-white">
-                          {isImage ? (
-                            <img
-                              src={file.fileUrl}
-                              alt={file.fileName}
-                              className="max-w-full h-auto max-h-225 print:max-h-[250mm] object-contain"
-                            />
-                          ) : (
-                            <div className="w-full">
-                              <PdfAttachmentRenderer
-                                pdfUrl={file.fileUrl}
-                                title={`Lampiran Penunjang: ${file.examType ? file.examType.toUpperCase() : file.fileName}`}
-                                patientName={patient.fullName}
-                                mcuNumber={patient.mcuNumber || '-'} 
-                              />
-                            </div>
-                          )}
+                        
+                        <div className="w-full">
+                          <PdfAttachmentRenderer
+                            pdfUrl={file.fileUrl}
+                            title={`Lampiran Penunjang: ${file.examType ? file.examType.toUpperCase() : 'EKG'}`}
+                            patientName={patient.fullName}
+                            mcuNumber={patient.mcuNumber || '-'} 
+                          />
                         </div>
                       </div>
                     );
-                  })}
+                  }
+
+                  // JIKA FILE ADALAH GAMBAR (TETAP SEPERTI SEMULA)
+                  return (
+                    <div
+                      key={file.id}
+                      className="print:break-before-page border border-gray-200 print:border-none rounded-xl p-4 print:p-0 mb-6 mt-8"
+                    >
+                      <div className="mb-3 pb-1 border-b border-gray-300 flex justify-between items-center">
+                        <span className="font-bold text-xs text-gray-800 uppercase">
+                          LAMPIRAN {index + 1}: {file.examType ? file.examType.toUpperCase() : 'PENUNJANG'}
+                        </span>
+                        <span className="text-[11px] text-gray-500 font-medium">{file.fileName}</span>
+                      </div>
+
+                      <div className="flex justify-center items-center w-full bg-white">
+                        <img
+                          src={file.fileUrl}
+                          alt={file.fileName}
+                          className="max-w-full h-auto max-h-225 print:max-h-[250mm] object-contain"
+                        />
+                      </div>
+                    </div>
+                  );
+                })}
                 </div>
               )}
 
