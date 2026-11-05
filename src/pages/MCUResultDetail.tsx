@@ -235,6 +235,12 @@ export const MCUResultDetail = () => {
     );
   };
 
+  const handlePrintDocument = (e: React.MouseEvent) => {
+    e.preventDefault();
+    console.log("Memicu dialog cetak...");
+    window.print();
+  };
+
   return (
     <div className="space-y-6">
       {/* HEADER PAGE */}
@@ -623,9 +629,9 @@ export const MCUResultDetail = () => {
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => window.print()}
+                  onClick={handlePrintDocument}
                   className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer active:scale-95"
-                >
+                  >
                   <Printer className="w-4 h-4" /> Cetak / Simpan PDF
                 </button>
                 <button
