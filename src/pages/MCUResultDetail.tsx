@@ -1099,70 +1099,61 @@ export const MCUResultDetail = () => {
 
               {/* HALAMAN LAMPIRAN 3: PEMERIKSAAN PENUNJANG (KONDISIONAL) */}
               {penunjangAttachments.length > 0 && (
-                <div className="print-attachment-page space-y-4">
-                  <div className="font-bold text-xs bg-gray-200 p-2 border border-black uppercase flex items-center justify-between">
-                    <span className="flex items-center gap-1.5">
-                      <Stethoscope className="w-4 h-4" /> Lampiran III: Hasil Pemeriksaan Penunjang (EKG / Spirometri / dll)
-                    </span>
-                    <span className="text-[10px] text-gray-600 font-normal">
-                      Pasien: {patient.fullName} ({patient.mcuNumber})
-                    </span>
-                  </div>
+                <div className="mt-8 space-y-6">
+                  <h3 className="text-sm font-bold text-gray-900 border-b-2 border-gray-900 pb-1 uppercase tracking-wider">
+                    Lampiran Hasil Pemeriksaan Penunjang
+                  </h3>
 
-                  <div className="space-y-8 mt-8">
-                      {penunjangAttachments.map((file, index) => {
-                        const isImage = file.fileType?.startsWith('image/') || 
-                                        file.fileUrl.match(/\.(jpeg|jpg|gif|png)$/i) != null;
+                  {penunjangAttachments.map((file, index) => {
+                    const isImage =
+                      file.fileType?.startsWith('image/') ||
+                      file.fileUrl?.match(/\.(jpeg|jpg|gif|png|webp)$/i) != null;
 
-                        return (
-                          <div 
-                            key={file.id} 
-                            className="print:break-before-page border border-gray-200 print:border-none rounded-lg p-4 print:p-0"
-                          >
-                            <h4 className="font-bold text-gray-800 text-sm mb-4 border-b-2 border-gray-800 pb-2">
-                              LAMPIRAN {index + 1}: {file.examType ? file.examType.toUpperCase() : 'PEMERIKSAAN PENUNJANG'} 
-                              <span className="text-xs font-normal text-gray-500 ml-2">({file.fileName})</span>
-                            </h4>
-                            
-                            {isImage ? (
-                              <div className="flex justify-center">
-                                <img 
-                                  src={file.fileUrl} 
-                                  alt={file.fileName} 
-                                  className="max-w-full h-auto max-h-225 object-contain print:max-h-[250mm]"
-                                />
-                              </div>
-                            ) : (
-                              /* Untuk PDF atau file dokumen lain, tampilkan tautan unduh/akses langsung agar aman saat dicetak */
-                              <div className="flex flex-col items-center justify-center p-8 bg-gray-50 rounded-lg border border-dashed border-gray-300 print:border-solid">
-                                <p className="text-sm font-bold text-gray-700">Dokumen Lampiran: {file.fileName}</p>
-                                <p className="text-xs text-gray-500 text-center max-w-md mt-1 mb-4 print:hidden">
-                                  Dokumen PDF terlampir dalam sistem. Klik tombol di bawah untuk membuka atau mengunduh berkas fisik.
-                                </p>
-                                <a 
-                                  href={file.fileUrl} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition-colors print:hidden"
-                                >
-                                  Buka / Unduh Dokumen PDF
-                                </a>
-                                <p className="hidden print:block text-[10px] text-blue-600 underline break-all mt-2">
-                                  Tautan Berkas: {file.fileUrl}
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
+                    return (
+                      <div
+                        key={file.id}
+                        className="print:break-before-page border border-gray-200 print:border-none rounded-xl p-4 print:p-0 mb-6"
+                      >
+                        {/* JUDUL PEMERIKSAAN */}
+                        <div className="mb-3 pb-1 border-b border-gray-300 flex justify-between items-center">
+                          <span className="font-bold text-xs text-gray-800 uppercase">
+                            LAMPIRAN {index + 1}: {file.examType ? file.examType.toUpperCase() : 'PENUNJANG'}
+                          </span>
+                          <span className="text-[11px] text-gray-500 font-medium">{file.fileName}</span>
+                        </div>
+
+                        {/* DISPLAY VISUAL BERKAS */}
+                        <div className="flex justify-center items-center w-full bg-white">
+                          {isImage ? (
+                            <img
+                              src={file.fileUrl}
+                              alt={file.fileName}
+                              className="max-w-full h-auto max-h-225 print:max-h-[250mm] object-contain"
+                            />
+                          ) : (
+                            <object
+                              data={`${file.fileUrl}#toolbar=0&navpanes=0&scrollbar=0`}
+                              type="application/pdf"
+                              className="w-full h-200 print:h-[250mm] border-0"
+                            >
+                              <iframe
+                                src={`${file.fileUrl}#toolbar=0&navpanes=0&scrollbar=0`}
+                                className="w-full h-200 print:h-[250mm] border-0"
+                                title={file.fileName}
+                              />
+                            </object>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
 
-            </div>
-          </div>
-        </div>
-      )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
       {/* CSS KHUSUS MEDIA PRINT A4 PRESISI */}
       <style>{`
